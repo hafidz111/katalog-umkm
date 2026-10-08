@@ -96,7 +96,7 @@ Menambahkan konfigurasi shadcn/ui di `components.json`, komponen Button/Input/Te
 Pesan error inline katalog diganti dengan toast. `lib/toast.js` menjadi tempat pemanggilan toast, sementara `ErrorToast` memakai ID stabil dan penjagaan efek agar tidak tampil dua kali. `FormDenganToast` menonaktifkan popup validasi bawaan dan hanya melaporkan field invalid pertama. Validasi form kosong dan login salah berulang diperiksa di browser: hanya satu toast untuk kejadian yang sama.
 
 **Status bonus:**
-Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 juga telah dikerjakan pada bagian tersendiri; US-10 telah dikerjakan pada bagian tersendiri; US-11 (pencarian) telah dikerjakan pada bagian tersendiri; US-12 sampai US-14 belum dikerjakan.
+Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 juga telah dikerjakan pada bagian tersendiri; US-10 telah dikerjakan pada bagian tersendiri; US-11 (pencarian) telah dikerjakan pada bagian tersendiri; US-12 (jumlah) telah dikerjakan pada bagian tersendiri; US-13 sampai US-14 belum dikerjakan.
 
 ### Diagnosis produk tidak muncul: jenis kunci Supabase salah
 
@@ -332,3 +332,38 @@ Build Webpack berhasil. Pengujian helper simulasi lulus untuk keempat pasangan k
 
 **Cara tes:**
 Klik ikon filter lalu pilih salah satu urutan; hasil langsung diperbarui. Coba semua pilihan dan refresh/pindah halaman untuk memastikan pilihan bertahan.
+
+
+## US-12 Pilihan jumlah sebelum pesan WhatsApp
+
+**Prompt:**
+Tambahkan jumlah awal 1, validasi bilangan bulat 1–99, dan sertakan nama, harga satuan, jumlah, total dalam pesan WhatsApp. Pisahkan interaksi dari Server Component, pertahankan tampilan, serta uji tanpa mengirim pesan ke toko.
+
+**Hasil:**
+Halaman detail tetap mengambil produk dari Supabase di server dan memberikan id/nama/harga kepada PesananProduk. Komponen client ini hanya menyimpan input jumlah dengan nilai awal 1 memakai Input yang tersedia. Tombol WhatsApp mempertahankan tampilan, nomor toko, encodeURIComponent, target _blank, dan rel noopener noreferrer. Helper pesan menghitung total dari harga server × jumlah valid dan memformat harga satuan serta total dalam rupiah.
+
+**Perbaikan:**
+Input disimpan sebagai string agar kosong tidak otomatis menjadi nol dan pecahan/negatif tidak diam-diam dibulatkan. Helper hanya menerima jumlah bulat 1–99. Input kosong, 0, 100, negatif, pecahan, notasi eksponen, atau teks menghasilkan tautan null; tombol tanpa href mencegah navigasi saat klik/Enter/Space serta menampilkan satu error Sonner dengan ID stabil per produk. Tidak ada error inline. Tidak menambah varian, kolom database, penyimpanan pesanan, keranjang, checkout, paket, atau perubahan RLS.
+
+**Verifikasi:**
+Build npm run build -- --webpack berhasil. Pengujian helper simulasi lulus untuk jumlah 1, 2, 99, invalid/kosong/pecahan/negatif/di luar batas, harga 0, nomor toko, karakter khusus nama, dan isi pesan decoded. Browser dengan database simulasi memverifikasi jumlah awal 1, jumlah 2 menghasilkan total Rp30.000 dari harga Rp15.000, jumlah 99 menghasilkan Rp1.485.000, input invalid menghilangkan href, serta klik invalid menghasilkan tepat satu toast dan tetap di detail. Atribut tab baru dan rel diperiksa. Harga 0 diverifikasi dari data server simulasi dan pesan decoded (harga satuan/total Rp0). Screenshot detail pada 390 px diperiksa. Tidak ada tautan valid yang diklik, tidak ada pesan dikirim ke toko, dan database Supabase asli tidak diubah.
+
+**File diubah:**
+app/produk/[id]/page.jsx, components/PesananProduk.jsx, components/TombolWhatsApp.jsx, lib/pesan-whatsapp.js, dan PROMPTS.md.
+
+**Cara tes:**
+Buka detail, periksa jumlah awal 1, ubah menjadi 2 atau 99, lalu periksa href tombol dan decode parameter text untuk mencocokkan harga satuan/jumlah/total. Kosongkan atau isi 0, -1, 1.5, 100 lalu klik tombol: halaman tetap dan satu toast error tampil. Periksa tampilan HP; tidak perlu membuka WhatsApp atau mengirim pesan untuk menguji isi tautan.
+
+## Perbaikan US-12: counter jumlah tersambung dengan input
+
+**Prompt:**
+Tambahkan counter; ketika pengguna sedang mengetik, klik tombol counter juga memperbarui jumlah.
+
+**Hasil dan perbaikan:**
+PesananProduk menambahkan tombol minus/plus shadcn di sisi input yang dikendalikan satu state. Tombol menggunakan nilai terbaru yang diketik, sehingga mengetik 12 lalu plus menjadi 13, minus menjadi 12; tautan dan total WhatsApp langsung diperbarui. Minus nonaktif pada 1 dan plus nonaktif pada 99. Input invalid tidak dibulatkan atau dikoreksi diam-diam: klik counter menampilkan satu toast melalui ID yang sama dengan validasi pemesanan. Tampilan lain tetap.
+
+**Verifikasi:**
+Build Webpack berhasil. Browser database simulasi memverifikasi input 12 → plus 13 (total Rp195.000) → minus 12 (Rp180.000), minus nonaktif pada jumlah awal 1, plus nonaktif pada 99, input kosong menghasilkan tepat satu toast, serta tampilan counter 390 px. Tidak membuka WhatsApp atau mengirim pesan ke toko.
+
+**File diubah:**
+components/PesananProduk.jsx dan PROMPTS.md.
