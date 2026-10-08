@@ -96,7 +96,7 @@ Menambahkan konfigurasi shadcn/ui di `components.json`, komponen Button/Input/Te
 Pesan error inline katalog diganti dengan toast. `lib/toast.js` menjadi tempat pemanggilan toast, sementara `ErrorToast` memakai ID stabil dan penjagaan efek agar tidak tampil dua kali. `FormDenganToast` menonaktifkan popup validasi bawaan dan hanya melaporkan field invalid pertama. Validasi form kosong dan login salah berulang diperiksa di browser: hanya satu toast untuk kejadian yang sama.
 
 **Status bonus:**
-Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 juga telah dikerjakan pada bagian tersendiri; US-10 telah dikerjakan pada bagian tersendiri; US-11 (pencarian) telah dikerjakan pada bagian tersendiri; US-12 (jumlah) telah dikerjakan pada bagian tersendiri; US-13 telah dikerjakan pada bagian tersendiri; US-14 belum dikerjakan.
+Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 juga telah dikerjakan pada bagian tersendiri; US-10 telah dikerjakan pada bagian tersendiri; US-11 (pencarian) telah dikerjakan pada bagian tersendiri; US-12 (jumlah) telah dikerjakan pada bagian tersendiri; US-13 telah dikerjakan pada bagian tersendiri; US-14 telah diimplementasikan pada bagian tersendiri; panggilan Gemini asli belum terverifikasi.
 
 ### Diagnosis produk tidak muncul: jenis kunci Supabase salah
 
@@ -390,3 +390,45 @@ app/manifest.js, app/layout.jsx, components/DaftarServiceWorker.jsx, public/sw.j
 
 **Cara tes manual:**
 Jalankan aplikasi hasil build, buka katalog sekali dengan koneksi, periksa manifest dan worker aktif di DevTools Application. Putuskan jaringan lalu reload katalog/detail: halaman offline muncul tanpa produk lama. Periksa Cache Storage hanya berisi offline.html dan kedua ikon; halaman admin/login dan request POST/Auth tidak boleh masuk. Pada deployment HTTPS, buka di browser HP yang mendukung, gunakan Install/Tambahkan ke layar utama, lalu periksa nama/ikon/standalone. Pengujian instalasi tersebut masih perlu dilakukan pada perangkat nyata.
+
+
+## US-14 Deskripsi produk AI melalui Gemini
+
+**Prompt:**
+Tambahkan Buat deskripsi AI pada form tambah/ubah, Action server wajib getUser, env GEMINI_API_KEY/GEMINI_MODEL, fetch tanpa SDK, validasi input, timeout/error lengkap, konfirmasi penggantian, penolakan hasil lama, dan isian tetap saat gagal. Pertahankan US-08/09 tanpa perubahan database/RLS.
+
+**Hasil:**
+Action buatDeskripsiProdukAdmin memeriksa sesi admin melalui getUser sebelum helper Gemini melakukan fetch. Helper hanya mengirim nama/kategori sebagai data JSON, bukan email/password/token admin. Nama wajib terisi setelah trim; panjang maksimal nama 150 dan kategori 100 karakter, karakter kontrol ditolak. API key hanya ada pada header x-goog-api-key di server; endpoint tetap milik Google, model berasal dari env dan dibatasi format ID. Tidak ada SDK/paket baru.
+
+**Dokumentasi resmi diperiksa:**
+https://ai.google.dev/api/generate-content dan https://ai.google.dev/gemini-api/docs/models. Endpoint POST v1beta/models/{model}:generateContent memakai contents/parts dan systemInstruction. Contoh model teks gemini-3.5-flash-lite disebut di komentar .env.example; kedua variabel tetap kosong agar pengelola mengisi konfigurasi yang berlaku untuk proyeknya. Tidak memakai NEXT_PUBLIC_.
+
+**Perbaikan:**
+Timeout 15 detik mencakup fetch dan pembacaan body; timer dibersihkan. Pesan terkontrol menangani konfigurasi kosong, model/key invalid atau tidak tersedia, limit 429, jaringan, HTTP gagal, respons kosong, prompt diblokir, finishReason tidak tuntas, dan format output tidak sesuai. ErrorDeskripsi memisahkan pesan aman dari exception mentah sehingga rahasia tidak bocor. Prompt meminta 2–3 kalimat Indonesia teks biasa dan melarang mengarang komposisi, sertifikasi, manfaat kesehatan, stok, asal, atau klaim lain yang tidak diberikan. Bagian thought tidak dimasukkan sebagai deskripsi.
+
+Tombol kecil terpisah menonaktifkan dirinya dan memakai guard ref selama proses. Hasil mengisi textarea untuk ditinjau/diedit saja; tidak insert/update otomatis. Jika deskripsi terisi, konfirmasi diperlukan sebelum API; pembatalan mempertahankan teks tanpa Action. Revisi nama/kategori/deskripsi dilacak, termasuk perubahan lalu dikembalikan, agar hasil lama tidak menimpa isian terbaru. Harga/foto terbaru juga dipertahankan saat hasil dimasukkan. Simpan tetap menggunakan Action US-08/09 dan nonaktif selama AI berjalan. Semua kegagalan memakai satu toast ID deskripsi-ai tanpa inline.
+
+**Verifikasi:**
+Build npm run build -- --webpack berhasil setelah seluruh perubahan. Simulasi Action/API lulus untuk login wajib tanpa fetch, nama kosong, batas panjang, request minimal/header/endpoint no-store, sukses, timeout, limit, respons kosong, diblokir, jaringan, HTTP gagal, dan konfigurasi kosong. Simulasi handler UI lulus untuk batal konfirmasi tanpa Action, guard permintaan berulang, hasil mengisi textarea saja, revisi berubah ditolak, dan gagal mempertahankan isian dengan ID toast stabil. Pengujian ulang Action US-08 dan US-09 lulus dengan Supabase simulasi.
+
+Browser memakai Auth/database simulasi memverifikasi tombol pada halaman tambah serta ubah; kegagalan konfigurasi menampilkan tepat satu toast dan nama/harga 0/kategori tetap utuh. Screenshot form 390 px diperiksa. GEMINI_API_KEY dan GEMINI_MODEL belum diisi dalam konfigurasi lokal; tidak ada panggilan Gemini asli, perubahan data asli, atau klaim kualitas keluaran model nyata. Prompt membatasi klaim, tetapi admin tetap perlu meninjau hasil sebelum menyimpan.
+
+**File diubah:**
+components/FormProduk.jsx, components/TombolDeskripsiAI.jsx, app/admin/actions.js, lib/gemini/deskripsi.js, lib/gemini/error.js, .env.example, dan PROMPTS.md.
+
+**Cara tes manual:**
+Isi kedua env server lalu restart aplikasi. Login, buka tambah/ubah, isi nama/kategori, klik Buat deskripsi AI; tinjau/edit textarea lalu gunakan Simpan produk seperti biasa. Saat deskripsi sudah terisi, batalkan konfirmasi untuk memastikan teks bertahan. Ubah nama/kategori saat AI berjalan: hasil lama tidak dimasukkan. Tanpa login Action menolak sebelum API. Error tidak boleh menghapus isian atau muncul dua kali. Ketersediaan model/key dan keluaran Gemini nyata masih perlu diverifikasi setelah konfigurasi tersedia.
+
+## Perbaikan US-14: diagnosis error generate yang terlalu umum
+
+**Laporan:**
+Generate gagal dengan “Gemini gagal membuat deskripsi. Silakan coba lagi nanti.”
+
+**Pemeriksaan:**
+Konfigurasi lokal kini sudah berisi GEMINI_API_KEY dan GEMINI_MODEL; nilainya tidak ditampilkan. Model gemini-3.8-flash sesuai dokumentasi resmi https://ai.google.dev/gemini-api/docs/models/gemini-3.8-flash. Pemeriksaan GET metadata model dengan key lokal menghasilkan HTTP 200 dan generateContent didukung. Ini memverifikasi akses key/model, bukan keberhasilan generate deskripsi. Respons gagal generate yang dilaporkan belum memuat status HTTP, sehingga penyebab pastinya belum bisa ditetapkan.
+
+**Perbaikan:**
+lib/gemini/deskripsi.js sekarang menangani alasan API_KEY_INVALID/EXPIRED/SERVICE_BLOCKED dari body error tanpa menampilkan body mentah, key, atau data admin. HTTP 400 menampilkan penolakan request/config, HTTP 5xx menampilkan gangguan layanan beserta kode, dan status lain juga dicantumkan. Tetap satu toast Sonner. Tidak mengubah model/env secara otomatis.
+
+**Verifikasi:**
+Build Webpack berhasil. Simulasi API/UI sebelumnya tetap lulus; tambahan tes key invalid HTTP 400, request invalid HTTP 400, dan server HTTP 500 lulus. Pemeriksaan metadata model asli berhasil; generateContent asli belum diuji dari sesi admin pada pengerjaan diagnosis ini. Restart aplikasi dan ulangi tombol AI untuk mendapatkan status error yang spesifik jika kegagalan berlanjut.

@@ -1,5 +1,7 @@
 "use server";
 
+import { ErrorDeskripsi } from "@/lib/ai/error";
+import { buatDeskripsiAI } from "@/lib/ai/deskripsi";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { buatSupabaseSession } from "@/lib/supabase/session";
@@ -188,4 +190,17 @@ export async function hapusProdukAdmin(id) {
   revalidatePath("/");
   revalidatePath(`/produk/${BigInt(id).toString()}`);
   return { berhasil: true, pesan: "Produk berhasil dihapus.", percobaan: crypto.randomUUID() };
+}
+
+
+export async function buatDeskripsiProdukAdmin(nama, kategori) {
+  try {
+    const supabase = await buatSupabaseSession();
+    const { data, error } = await supabase.auth.getUser();
+    if (error || !data?.user) return gagal("Sesi login tidak valid atau telah berakhir. Silakan masuk kembali sebelum membuat deskripsi AI.");
+    const deskripsi = await buatDeskripsiAI(nama, kategori);
+    return { berhasil: true, deskripsi };
+  } catch (error) {
+    return gagal(error instanceof ErrorDeskripsi ? error.message : "Tidak dapat membuat deskripsi AI. Periksa koneksi lalu coba lagi.");
+  }
 }

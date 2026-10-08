@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
+import TombolDeskripsiAI from "@/components/TombolDeskripsiAI";
 import ErrorToast from "@/components/ErrorToast";
 import FormDenganToast from "@/components/FormDenganToast";
 import Input from "@/components/Input";
@@ -17,10 +18,14 @@ export default function FormProduk({ produk = {}, labelTombol, action }) {
     nama: produk.nama ?? "", harga: produk.harga ?? "", kategori: produk.kategori ?? "",
     foto_url: produk.foto_url ?? "", deskripsi: produk.deskripsi ?? "",
   }));
+  const latest = useRef({ values, revisi: 0 });
+  const [aiPending, setAiPending] = useState(false);
   const [state, formAction, pending] = useActionState(action ?? aksiBelumAktif, { pesan: "", percobaan: "awal" });
   function ubahField(event) {
     const { name, value } = event.target;
-    setValues((sebelumnya) => ({ ...sebelumnya, [name]: value }));
+    const baru = { ...latest.current.values, [name]: value };
+    latest.current = { values: baru, revisi: latest.current.revisi + (["nama", "kategori", "deskripsi"].includes(name) ? 1 : 0) };
+    setValues(baru);
   }
   return (
     <FormDenganToast action={formAction} aria-busy={pending} className="flex max-w-xl flex-col gap-4">
@@ -44,8 +49,16 @@ export default function FormProduk({ produk = {}, labelTombol, action }) {
         value={values.foto_url} onChange={ubahField}
       />
       <Input label="Deskripsi" name="deskripsi" textarea value={values.deskripsi} onChange={ubahField} />
+      <div className="self-start">
+        <TombolDeskripsiAI disabled={pending} snapshot={() => latest.current} onPending={setAiPending}
+          onHasil={(deskripsi) => {
+            const baru = { ...latest.current.values, deskripsi };
+            latest.current = { values: baru, revisi: latest.current.revisi + 1 };
+            setValues(baru);
+          }} />
+      </div>
       <div className="flex gap-3">
-        <Tombol type="submit" disabled={pending}>{labelTombol}</Tombol>
+        <Tombol type="submit" disabled={pending || aiPending}>{labelTombol}</Tombol>
         <Tombol href="/admin" varian="garis">
           Batal
         </Tombol>
