@@ -51,6 +51,10 @@ export async function masukAdmin(_state, formData) {
 export async function keluarAdmin() {
   try {
     const supabase = await buatSupabaseSession();
+    const { data: sesi, error: errorSesi } = await supabase.auth.getUser();
+    if (errorSesi || !sesi?.user) {
+      return gagal("Sesi login tidak valid atau telah berakhir. Silakan masuk kembali.");
+    }
     const { error } = await supabase.auth.signOut({ scope: "local" });
     if (error) {
       return gagal("Gagal mengakhiri sesi. Silakan coba keluar lagi.");
