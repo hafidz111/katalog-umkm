@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { buatSupabaseSession } from "@/lib/supabase/session";
+import { validasiProduk } from "@/lib/validasi-produk";
 
 function gagal(pesan) {
   // Identitas hasil baru memungkinkan toast muncul lagi pada percobaan berikutnya.
@@ -112,4 +113,29 @@ export async function gantiPasswordAdmin(_state, formData) {
   } catch {
     return gagal("Tidak dapat terhubung ke layanan akun. Silakan coba lagi atau hubungi pengelola toko.");
   }
+}
+
+
+export async function tambahProdukAdmin(_state, formData) {
+  try {
+    const supabase = await buatSupabaseSession();
+    const { data: sesi, error: errorSesi } = await supabase.auth.getUser();
+    if (errorSesi || !sesi?.user) {
+      return gagal("Sesi login tidak valid atau telah berakhir. Silakan masuk kembali sebelum menambah produk.");
+    }
+
+    const hasil = validasiProduk(formData);
+    if (hasil.error) return gagal(hasil.error);
+
+    const { data, error } = await supabase.from("produk").insert(hasil.data).select("id").single();
+    if (error || !data?.id) {
+      return gagal("Gagal menyimpan produk. Periksa koneksi dan izin akses database, lalu coba lagi.");
+    }
+  } catch {
+    return gagal("Tidak dapat menyimpan produk. Periksa koneksi dan coba lagi.");
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  redirect("/admin");
 }

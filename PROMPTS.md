@@ -96,7 +96,7 @@ Menambahkan konfigurasi shadcn/ui di `components.json`, komponen Button/Input/Te
 Pesan error inline katalog diganti dengan toast. `lib/toast.js` menjadi tempat pemanggilan toast, sementara `ErrorToast` memakai ID stabil dan penjagaan efek agar tidak tampil dua kali. `FormDenganToast` menonaktifkan popup validasi bawaan dan hanya melaporkan field invalid pertama. Validasi form kosong dan login salah berulang diperiksa di browser: hanya satu toast untuk kejadian yang sama.
 
 **Status bonus:**
-Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 sampai US-14 belum dikerjakan.
+Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 sampai US-14 belum dikerjakan.
 
 ### Diagnosis produk tidak muncul: jenis kunci Supabase salah
 
@@ -155,7 +155,7 @@ Menormalisasi nilai Location terhadap alamat server lokal sebelum memeriksa tuju
 
 ## US-07 List produk admin dari database
 
-**Prompt [SENDIRI]:**
+**Prompt:**
 Baca AGENTS.md bagian aturan keamanan dan docs/user-stories.md bagian US-07.
 
 hubungan produk dengan database di halaman admin
@@ -171,3 +171,24 @@ Build `npm run build -- --webpack` berhasil. Pengujian login/logout dan ganti pa
 
 **File diubah:**
 `app/admin/page.jsx`, `lib/supabase/session.js`, dan `PROMPTS.md`.
+
+
+## US-08 Tambah produk
+
+**Prompt:**
+Hubungkan form tambah produk ke tabel `produk` melalui Server Action. Gunakan sesi cookie admin dan publishable key, verifikasi login sebelum insert, validasi nama/harga/link foto di server, pertahankan isian saat gagal, tampilkan satu toast error, lalu revalidate katalog/admin dan kembali ke `/admin` setelah berhasil. Jangan mengubah skema/RLS, memasang paket, atau menjalankan Git.
+
+**Hasil:**
+`tambahProdukAdmin` di `app/admin/actions.js` memakai `buatSupabaseSession`, memanggil `getUser()` sebelum insert, dan menyimpan hanya `nama`, `harga`, `deskripsi`, `foto_url`, serta `kategori`. ID dan waktu dibuat diisi database. Hasil insert diperiksa sebelum revalidate `/admin` dan `/`, kemudian redirect ke `/admin`. Catatan belum aktif pada halaman tambah dihapus.
+
+**Perbaikan:**
+`lib/validasi-produk.js` memvalidasi nama setelah trim dan harga bulat 0–2.147.483.647, dengan harga kosong tetap ditolak. Link foto dibatasi HTTP/HTTPS atau path `/produk/...`; path keluar direktori, protokol lain, dan format field yang tidak valid ditolak. Field opsional kosong disimpan sebagai null. `FormProduk` menerima Action agar dapat dipakai kembali pada US-09; field terkontrol mempertahankan isian saat gagal. Tombol Simpan dinonaktifkan selama proses, error tampil sekali lewat Sonner. Form ubah yang belum tersambung tidak memakai Action tambah.
+
+**Verifikasi:**
+Build Webpack berhasil. Pengujian Supabase simulasi memeriksa penolakan tanpa login, harga kosong/pecahan/negatif/melebihi integer, link foto tidak valid, field opsional, kolom insert, kegagalan insert, revalidate, serta redirect. Browser simulasi membuktikan harga 0 diterima, seluruh isian tetap tersimpan ketika insert gagal, tepat satu toast tampil, dan insert berhasil kembali ke `/admin`. Pengujian tidak menambahkan produk ke Supabase asli.
+
+**File diubah:**
+`app/admin/actions.js`, `app/admin/produk/baru/page.jsx`, `components/FormProduk.jsx`, `lib/validasi-produk.js`, dan `PROMPTS.md`.
+
+**Cara tes database asli:**
+Login, buka `/admin/produk/baru`, isi produk uji dengan nama yang jelas, harga 0 atau harga valid lain, lalu Simpan produk. Cocokkan baris pada `/admin`, katalog, dan Supabase. Tanpa login, halaman harus dialihkan ke login; pengujian Action simulasi juga memastikan insert tidak dipanggil tanpa sesi valid.
