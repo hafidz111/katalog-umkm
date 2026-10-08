@@ -96,7 +96,7 @@ Menambahkan konfigurasi shadcn/ui di `components.json`, komponen Button/Input/Te
 Pesan error inline katalog diganti dengan toast. `lib/toast.js` menjadi tempat pemanggilan toast, sementara `ErrorToast` memakai ID stabil dan penjagaan efek agar tidak tampil dua kali. `FormDenganToast` menonaktifkan popup validasi bawaan dan hanya melaporkan field invalid pertama. Validasi form kosong dan login salah berulang diperiksa di browser: hanya satu toast untuk kejadian yang sama.
 
 **Status bonus:**
-Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 juga telah dikerjakan pada bagian tersendiri; US-10 telah dikerjakan pada bagian tersendiri; US-11 (pencarian) telah dikerjakan pada bagian tersendiri; US-12 (jumlah) telah dikerjakan pada bagian tersendiri; US-13 sampai US-14 belum dikerjakan.
+Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 juga telah dikerjakan pada bagian tersendiri; US-10 telah dikerjakan pada bagian tersendiri; US-11 (pencarian) telah dikerjakan pada bagian tersendiri; US-12 (jumlah) telah dikerjakan pada bagian tersendiri; US-13 telah dikerjakan pada bagian tersendiri; US-14 belum dikerjakan.
 
 ### Diagnosis produk tidak muncul: jenis kunci Supabase salah
 
@@ -367,3 +367,26 @@ Build Webpack berhasil. Browser database simulasi memverifikasi input 12 → plu
 
 **File diubah:**
 components/PesananProduk.jsx dan PROMPTS.md.
+
+
+## US-13 PWA katalog
+
+**Prompt:**
+Jadikan katalog PWA memakai identitas toko, manifest App Router, ikon yang tersedia, service worker tanpa paket, offline fallback network-first, cache aman tanpa admin/Auth/Server Action/sesi, dan versi cache. Bedakan pemeriksaan localhost dari instalasi HTTPS perangkat.
+
+**Hasil:**
+app/manifest.js menghasilkan /manifest.webmanifest dengan nama/tagline dari lib/toko.js, start_url dan scope /, display standalone, lang id, warna latar #ffffff dan tema #1f6b4f sesuai token desain. Ikon PNG diperiksa nyata: 192×192 dan 512×512; purpose any, tidak mengklaim maskable. Layout menghubungkan manifest, ikon/aplikasi Apple, themeColor, dan satu komponen registrasi tanpa mengubah tampilan halaman. Registrasi hanya pada production agar pengembangan tidak terpengaruh cache.
+
+**Perbaikan:**
+public/sw.js memakai cache katalog-publik-v1, hanya precache offline.html dan dua ikon dengan credentials omit. Navigasi dokumen katalog/detail selalu fetch network-first dengan cache no-store, tanpa menyimpan produk. Network gagal memakai halaman offline yang menyatakan koneksi diperlukan untuk katalog/harga terbaru. HTTP error asli tetap diteruskan. /admin dan turunannya, POST/Server Action, header Next-Action/RSC, API/Auth/Supabase/Gemini, origin lain, serta aset di luar whitelist tidak diintersep/cache. Worker baru membersihkan versi cache milik katalog yang lama, tanpa menghapus cache aplikasi lain. Tidak skipWaiting, tidak ada handler yang memaksa reload, dan tidak ada toast offline berulang. Header sw.js mencegah cache HTTP worker lama. Halaman offline mandiri tanpa dependensi jaringan.
+
+**Verifikasi:**
+Build npm run build -- --webpack berhasil. HTTP localhost memverifikasi manifest, nama/display/lang/start_url, metadata, ukuran ikon dari byte PNG, tipe JavaScript/header cache-control worker, dan offline HTML. Simulasi lifecycle worker memverifikasi install whitelist dengan credentials omit, pembersihan versi lama, klaim client tanpa reload, navigasi network-first tanpa menyimpan produk, fallback offline, pengecualian admin/Auth/API/POST/RSC/origin lain, dan ikon cached. Simulasi registrasi memeriksa production-only, scope root, dan updateViaCache none.
+
+Browser memuat aplikasi production dengan Supabase simulasi di localhost, lalu server lokal dihentikan. Refresh / dan navigasi /produk/1 benar-benar menampilkan halaman offline dari service worker, membuktikan registrasi/aktivasi dan cache fallback bekerja pada browser lokal. Navigasi /admin/login saat server mati ditolak koneksi (bukan halaman login tersimpan/fallback), sesuai pengecualian. Screenshot offline 390 px diperiksa. Tidak ada perubahan database asli. Ini pengujian localhost, bukan deployment HTTPS atau instalasi nyata pada HP; pemasangan perangkat dan perilaku instalasi browser/platform belum diuji. Fallback HTML berlaku untuk navigasi dokumen; permintaan RSC navigasi client tetap tidak dicache atau diganti HTML.
+
+**File diubah:**
+app/manifest.js, app/layout.jsx, components/DaftarServiceWorker.jsx, public/sw.js, public/offline.html, next.config.mjs, dan PROMPTS.md.
+
+**Cara tes manual:**
+Jalankan aplikasi hasil build, buka katalog sekali dengan koneksi, periksa manifest dan worker aktif di DevTools Application. Putuskan jaringan lalu reload katalog/detail: halaman offline muncul tanpa produk lama. Periksa Cache Storage hanya berisi offline.html dan kedua ikon; halaman admin/login dan request POST/Auth tidak boleh masuk. Pada deployment HTTPS, buka di browser HP yang mendukung, gunakan Install/Tambahkan ke layar utama, lalu periksa nama/ikon/standalone. Pengujian instalasi tersebut masih perlu dilakukan pada perangkat nyata.
