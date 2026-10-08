@@ -1,3 +1,4 @@
+import FormDenganToast from "@/components/FormDenganToast";
 import Input from "@/components/Input";
 import Tombol from "@/components/Tombol";
 import CatatanBelumAktif from "@/components/CatatanBelumAktif";
@@ -11,7 +12,7 @@ export default function HalamanLogin() {
         <h1 className="text-2xl font-extrabold">Masuk admin</h1>
         <p className="mt-1 text-sm text-teks-lembut">Khusus pemilik toko untuk mengelola produk.</p>
       </div>
-      <form className="flex flex-col gap-4">
+      <FormDenganToast className="flex flex-col gap-4">
         <Input label="Email" name="email" type="email" autoComplete="email" required />
         <Input
           label="Password"
@@ -21,7 +22,7 @@ export default function HalamanLogin() {
           required
         />
         <Tombol type="submit">Masuk</Tombol>
-      </form>
+      </FormDenganToast>
       <CatatanBelumAktif>Login belum berfungsi: lihat US-04.</CatatanBelumAktif>
     </div>
   );

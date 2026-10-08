@@ -1,3 +1,4 @@
+import FormDenganToast from "@/components/FormDenganToast";
 import Input from "@/components/Input";
 import Tombol from "@/components/Tombol";
 
@@ -5,7 +6,7 @@ import Tombol from "@/components/Tombol";
 // Nama field sama dengan kolom tabel "produk".
 export default function FormProduk({ produk = {}, labelTombol }) {
   return (
-    <form className="flex max-w-xl flex-col gap-4">
+    <FormDenganToast className="flex max-w-xl flex-col gap-4">
       <Input label="Nama produk" name="nama" defaultValue={produk.nama} required />
       <Input
         label="Harga (Rp)"
@@ -29,6 +30,6 @@ export default function FormProduk({ produk = {}, labelTombol }) {
           Batal
         </Tombol>
       </div>
-    </form>
+    </FormDenganToast>
   );
 }

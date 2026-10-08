@@ -1,12 +1,30 @@
+import ErrorToast from "@/components/ErrorToast";
 import KartuProduk from "@/components/KartuProduk";
-import CatatanBelumAktif from "@/components/CatatanBelumAktif";
-import { produkContoh } from "@/lib/data-contoh";
+import { buatSupabaseServer } from "@/lib/supabase/server";
 import { toko } from "@/lib/toko";
 
-// US-01: halaman ini masih memakai data contoh.
-// Tugas peserta: ambil daftar produk dari tabel "produk" di Supabase, di sisi server.
-export default function HalamanKatalog() {
-  const daftarProduk = produkContoh;
+export const dynamic = "force-dynamic";
+
+export default async function HalamanKatalog() {
+  let daftarProduk = [];
+  let pesanError = "";
+
+  try {
+    const supabase = buatSupabaseServer();
+    const { data, error } = await supabase
+      .from("produk")
+      .select("id, nama, harga, deskripsi, foto_url, kategori, created_at")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      throw error;
+    }
+
+    daftarProduk = data ?? [];
+  } catch {
+    pesanError =
+      "Gagal mengambil daftar produk. Silakan muat ulang halaman. Jika masalah berlanjut, hubungi pemilik toko untuk memeriksa koneksi dan konfigurasi Supabase.";
+  }
 
   return (
     <>
@@ -22,14 +40,17 @@ export default function HalamanKatalog() {
         <h2 id="judul-produk" className="text-xl font-bold">
           Produk kami
         </h2>
-        <CatatanBelumAktif>
-          Masih data contoh. Sambungkan ke database: lihat US-01 di docs/user-stories.md.
-        </CatatanBelumAktif>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-          {daftarProduk.map((produk) => (
-            <KartuProduk key={produk.id} produk={produk} />
-          ))}
-        </div>
+        {pesanError ? (
+          <ErrorToast pesan={pesanError} id="katalog-produk" />
+        ) : daftarProduk.length === 0 ? (
+          <p className="text-teks-lembut">Belum ada produk</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+            {daftarProduk.map((produk) => (
+              <KartuProduk key={produk.id} produk={produk} />
+            ))}
+          </div>
+        )}
       </section>
     </>
   );

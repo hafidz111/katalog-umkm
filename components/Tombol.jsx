@@ -1,25 +1,16 @@
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 
-const gaya = {
-  utama: "bg-utama text-white hover:bg-utama-gelap",
-  garis: "border border-garis bg-latar text-teks hover:border-utama hover:text-utama",
-  bahaya: "border border-garis bg-latar text-bahaya hover:border-bahaya",
-};
+const varianTombol = { utama: "default", garis: "outline", bahaya: "destructive" };
 
 export default function Tombol({ href, varian = "utama", className = "", children, ...props }) {
-  const kelas = `inline-flex items-center justify-center rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${gaya[varian]} ${className}`;
-
   if (href) {
     return (
-      <Link href={href} className={kelas}>
-        {children}
-      </Link>
+      <Button asChild variant={varianTombol[varian]} className={className}>
+        <Link href={href} {...props}>{children}</Link>
+      </Button>
     );
   }
 
-  return (
-    <button className={kelas} {...props}>
-      {children}
-    </button>
-  );
+  return <Button variant={varianTombol[varian]} className={className} {...props}>{children}</Button>;
 }

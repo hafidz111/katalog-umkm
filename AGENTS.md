@@ -50,3 +50,11 @@ Identitas toko (nama, nomor WhatsApp, alamat, jam buka) ada di `lib/toko.js`.
 5. Jangan menjalankan perintah Git apa pun (commit, push, dan lainnya dilakukan manual oleh pengguna).
 6. Hapus komponen `CatatanBelumAktif` dari halaman yang fiturnya sudah selesai.
 7. Setelah selesai, jelaskan singkat: file apa saja yang diubah dan cara mengetesnya.
+
+## Komponen UI dan pesan error
+
+- Gunakan shadcn/ui untuk komponen UI, dengan token warna proyek yang sudah ada.
+- Semua error aplikasi dan validasi form ditampilkan melalui Sonner.
+- Jangan menampilkan error yang sama dua kali: jangan gabungkan toast dengan pesan error inline.
+- Gunakan `lib/toast.js` dan ID toast yang stabil untuk mencegah toast ganda, termasuk saat efek React dijalankan ulang.
+- Pasang hanya satu `Toaster`, di layout utama.

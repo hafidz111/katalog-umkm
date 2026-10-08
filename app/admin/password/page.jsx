@@ -1,3 +1,4 @@
+import FormDenganToast from "@/components/FormDenganToast";
 import NavAdmin from "@/components/NavAdmin";
 import Input from "@/components/Input";
 import Tombol from "@/components/Tombol";
@@ -15,7 +16,7 @@ export default function HalamanGantiPassword() {
           Ganti password bawaan segera setelah pertama kali masuk. Minimal 8 karakter.
         </p>
       </div>
-      <form className="flex max-w-sm flex-col gap-4">
+      <FormDenganToast className="flex max-w-sm flex-col gap-4">
         <Input
           label="Password baru"
           name="password_baru"
@@ -35,7 +36,7 @@ export default function HalamanGantiPassword() {
         <Tombol type="submit" className="self-start">
           Simpan password
         </Tombol>
-      </form>
+      </FormDenganToast>
       <CatatanBelumAktif>Ganti password belum berfungsi: lihat US-05.</CatatanBelumAktif>
     </div>
   );
