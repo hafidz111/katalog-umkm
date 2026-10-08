@@ -1,8 +1,9 @@
+import { Suspense } from "react";
+import DaftarKatalog from "@/components/DaftarKatalog";
+import SkeletonKatalog from "@/components/SkeletonKatalog";
 import ErrorToast from "@/components/ErrorToast";
-import KartuProduk from "@/components/KartuProduk";
 import FormPencarian from "@/components/FormPencarian";
-import Tombol from "@/components/Tombol";
-import { ambilKatalog, bacaPencarian, urlKatalog } from "@/lib/katalog";
+import { bacaPencarian } from "@/lib/katalog";
 import { toko } from "@/lib/toko";
 
 export const dynamic = "force-dynamic";
@@ -10,18 +11,6 @@ export const dynamic = "force-dynamic";
 export default async function HalamanKatalog({ searchParams }) {
   const pencarian = bacaPencarian(await searchParams);
   const { q, urut = "" } = pencarian;
-  let daftarProduk = [];
-  let halaman = pencarian.halaman;
-  let jumlahHalaman = 1;
-  let pesanError = pencarian.error;
-
-  if (!pesanError) {
-    try {
-      ({ daftarProduk, halaman, jumlahHalaman } = await ambilKatalog(q, halaman, urut));
-    } catch {
-      pesanError = "Gagal mengambil daftar produk. Silakan muat ulang halaman. Jika masalah berlanjut, hubungi pemilik toko untuk memeriksa koneksi dan konfigurasi Supabase.";
-    }
-  }
 
   return (
     <>
@@ -38,23 +27,12 @@ export default async function HalamanKatalog({ searchParams }) {
           Produk kami
         </h2>
         <FormPencarian q={q} urutAwal={urut} />
-        {pesanError ? (
-          <ErrorToast pesan={pesanError} id="katalog-produk" />
-        ) : daftarProduk.length === 0 ? (
-          <p className="text-teks-lembut">{q ? "Tidak ada produk yang cocok dengan pencarian" : "Belum ada produk"}</p>
+        {pencarian.error ? (
+          <ErrorToast pesan={pencarian.error} id="katalog-produk" />
         ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
-            {daftarProduk.map((produk) => (
-              <KartuProduk key={produk.id} produk={produk} />
-            ))}
-          </div>
-        )}
-        {!pesanError && daftarProduk.length > 0 && jumlahHalaman > 1 && (
-          <nav aria-label="Halaman katalog" className="flex flex-wrap items-center gap-3">
-            {halaman > 1 && <Tombol href={urlKatalog(q, halaman - 1, urut)} varian="garis">Sebelumnya</Tombol>}
-            <span className="text-sm text-teks-lembut">Halaman {halaman} dari {jumlahHalaman}</span>
-            {halaman < jumlahHalaman && <Tombol href={urlKatalog(q, halaman + 1, urut)} varian="garis">Berikutnya</Tombol>}
-          </nav>
+          <Suspense key={`${q}:${urut}:${pencarian.halaman}`} fallback={<SkeletonKatalog />}>
+            <DaftarKatalog q={q} urut={urut} halaman={pencarian.halaman} />
+          </Suspense>
         )}
       </section>
     </>

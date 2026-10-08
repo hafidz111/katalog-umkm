@@ -36,7 +36,7 @@ export default async function HalamanDetailProduk({ params }) {
         alt={produk.nama}
         className="aspect-square w-full rounded-2xl border border-garis bg-permukaan object-cover"
       />
-      <div className="flex flex-col gap-4">
+      <div className="flex min-w-0 flex-col gap-4 break-words">
         <Link href="/" className="text-sm text-teks-lembut underline underline-offset-4 hover:text-utama">
           Kembali ke katalog
         </Link>
@@ -45,7 +45,7 @@ export default async function HalamanDetailProduk({ params }) {
         <p className="self-start rounded-md bg-harga-latar px-3 py-1 text-xl font-bold text-harga">
           {formatRupiah(produk.harga)}
         </p>
-        <p className="max-w-prose leading-relaxed text-teks-lembut">{produk.deskripsi}</p>
+        <p className="max-w-prose whitespace-pre-line leading-relaxed text-teks-lembut">{produk.deskripsi}</p>
         <PesananProduk produk={{ id: produk.id, nama: produk.nama, harga: produk.harga }} />
       </div>
     </article>

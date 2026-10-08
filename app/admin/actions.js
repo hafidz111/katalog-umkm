@@ -1,5 +1,8 @@
 "use server";
 
+import { simpanNotifikasiAdmin, konsumsiNotifikasiAdmin } from "@/lib/notifikasi-admin";
+
+import { unggahFotoProduk, batalkanUploadFoto, ErrorFotoProduk } from "@/lib/supabase/foto-produk";
 import { ErrorDeskripsi } from "@/lib/ai/error";
 import { buatDeskripsiAI } from "@/lib/ai/deskripsi";
 import { redirect } from "next/navigation";
@@ -49,6 +52,7 @@ export async function masukAdmin(_state, formData) {
   }
 
   revalidatePath("/admin", "layout");
+  await simpanNotifikasiAdmin("masuk");
   redirect("/admin");
 }
 
@@ -68,6 +72,7 @@ export async function keluarAdmin() {
   }
 
   revalidatePath("/admin", "layout");
+  await simpanNotifikasiAdmin("keluar");
   redirect("/admin/login");
 }
 
@@ -120,8 +125,9 @@ export async function gantiPasswordAdmin(_state, formData) {
 
 
 export async function tambahProdukAdmin(_state, formData) {
+  let supabase, foto, hapusUpload = false;
   try {
-    const supabase = await buatSupabaseSession();
+    supabase = await buatSupabaseSession();
     const { data: sesi, error: errorSesi } = await supabase.auth.getUser();
     if (errorSesi || !sesi?.user) {
       return gagal("Sesi login tidak valid atau telah berakhir. Silakan masuk kembali sebelum menambah produk.");
@@ -130,23 +136,31 @@ export async function tambahProdukAdmin(_state, formData) {
     const hasil = validasiProduk(formData);
     if (hasil.error) return gagal(hasil.error);
 
+    foto = await unggahFotoProduk(supabase, sesi.user.id, formData);
+    if (!foto) return gagal("Foto produk wajib diisi. Pilih gambar sebelum menyimpan.");
+    hasil.data.foto_url = foto.url;
     const { data, error } = await supabase.from("produk").insert(hasil.data).select("id").single();
     if (error || !data?.id) {
+      hapusUpload = Boolean(error);
       return gagal("Gagal menyimpan produk. Periksa koneksi dan izin akses database, lalu coba lagi.");
     }
-  } catch {
-    return gagal("Tidak dapat menyimpan produk. Periksa koneksi dan coba lagi.");
+  } catch (error) {
+    return gagal(error instanceof ErrorFotoProduk ? error.message : "Tidak dapat menyimpan produk. Periksa koneksi dan coba lagi.");
+  } finally {
+    if (hapusUpload && foto) await batalkanUploadFoto(supabase, foto);
   }
 
   revalidatePath("/admin");
   revalidatePath("/");
+  await simpanNotifikasiAdmin("tambah");
   redirect("/admin");
 }
 
 
 export async function ubahProdukAdmin(id, _state, formData) {
+  let supabase, foto, hapusUpload = false;
   try {
-    const supabase = await buatSupabaseSession();
+    supabase = await buatSupabaseSession();
     const { data: sesi, error: errorSesi } = await supabase.auth.getUser();
     if (errorSesi || !sesi?.user) {
       return gagal("Sesi login tidak valid atau telah berakhir. Silakan masuk kembali sebelum mengubah produk.");
@@ -155,17 +169,28 @@ export async function ubahProdukAdmin(id, _state, formData) {
     const hasil = validasiProduk(formData);
     if (hasil.error) return gagal(hasil.error);
 
+    const { data: lama, error: errorLama } = await supabase.from("produk").select("id, foto_url").eq("id", id).maybeSingle();
+    if (errorLama) return gagal("Gagal memeriksa produk. Silakan coba lagi.");
+    if (!lama) return gagal("Produk tidak ditemukan atau tidak dapat diubah.");
+    foto = await unggahFotoProduk(supabase, sesi.user.id, formData);
+    if (!foto && (formData.get("hapus_foto") === "1" || !(typeof lama.foto_url === "string" && lama.foto_url.trim()))) return gagal("Foto produk wajib diisi. Pilih gambar sebelum menyimpan.");
+    if (foto) hasil.data.foto_url = foto.url;
     const { data, error } = await supabase.from("produk")
       .update(hasil.data).eq("id", id).select("id").maybeSingle();
-    if (error) return gagal("Gagal menyimpan perubahan. Periksa koneksi dan izin akses database, lalu coba lagi.");
-    if (!data) return gagal("Produk tidak ditemukan atau tidak dapat diubah. Buka kembali daftar produk.");
-  } catch {
-    return gagal("Tidak dapat menyimpan perubahan. Periksa koneksi dan coba lagi.");
+    if (error || !data) {
+      hapusUpload = true;
+      return gagal(error ? "Gagal menyimpan perubahan. Periksa koneksi dan izin akses database, lalu coba lagi." : "Produk tidak ditemukan atau tidak dapat diubah. Buka kembali daftar produk.");
+    }
+  } catch (error) {
+    return gagal(error instanceof ErrorFotoProduk ? error.message : "Tidak dapat menyimpan perubahan. Periksa koneksi dan coba lagi.");
+  } finally {
+    if (hapusUpload && foto) await batalkanUploadFoto(supabase, foto);
   }
 
   revalidatePath("/admin");
   revalidatePath("/");
   revalidatePath(`/produk/${BigInt(id).toString()}`);
+  await simpanNotifikasiAdmin("ubah");
   redirect("/admin");
 }
 
@@ -203,4 +228,8 @@ export async function buatDeskripsiProdukAdmin(nama, kategori) {
   } catch (error) {
     return gagal(error instanceof ErrorDeskripsi ? error.message : "Tidak dapat membuat deskripsi AI. Periksa koneksi lalu coba lagi.");
   }
+}
+
+export async function ambilNotifikasiAdmin() {
+  return konsumsiNotifikasiAdmin();
 }

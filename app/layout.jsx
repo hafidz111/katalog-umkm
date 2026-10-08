@@ -3,6 +3,7 @@ import { Toaster } from "@/components/ui/sonner";
 import DaftarServiceWorker from "@/components/DaftarServiceWorker";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import NotifikasiAdmin from "@/components/NotifikasiAdmin";
 import { toko } from "@/lib/toko";
 
 export const metadata = {
@@ -27,11 +28,12 @@ export default function RootLayout({ children }) {
           href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap"
         />
       </head>
-      <body className="flex min-h-screen flex-col font-sans antialiased">
+      <body className="flex min-h-dvh flex-col font-sans antialiased">
         <Header />
-        <main className="mx-auto w-full max-w-5xl flex-1 px-4">{children}</main>
+        <main className="mx-auto w-full min-w-0 max-w-5xl flex-1 px-4">{children}</main>
         <Footer />
         <Toaster />
+        <NotifikasiAdmin />
         <DaftarServiceWorker />
       </body>
     </html>

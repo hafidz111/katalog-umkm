@@ -432,3 +432,96 @@ lib/gemini/deskripsi.js sekarang menangani alasan API_KEY_INVALID/EXPIRED/SERVIC
 
 **Verifikasi:**
 Build Webpack berhasil. Simulasi API/UI sebelumnya tetap lulus; tambahan tes key invalid HTTP 400, request invalid HTTP 400, dan server HTTP 500 lulus. Pemeriksaan metadata model asli berhasil; generateContent asli belum diuji dari sesi admin pada pengerjaan diagnosis ini. Restart aplikasi dan ulangi tombol AI untuk mendapatkan status error yang spesifik jika kegagalan berlanjut.
+
+## Penyesuaian identitas toko: TERAKOPIE
+
+Atas permintaan pengguna, data lib/toko.js diambil dari https://maps.app.goo.gl/5MT2WN8fJvJ41ed86: TERAKOPIE — Coffee, Brunch, Dinner & Roastery Semarang; Jl. Gerungsari No.13, Bulusan, Kec. Tembalang, Kota Semarang, Jawa Tengah 50277; nomor 0823-2706-5712; Senin–Jumat 09.00–00.00, Sabtu–Minggu 16.00–00.00. Nomor diformat internasional untuk tautan WhatsApp. Data Maps dibaca melalui browser; status WhatsApp nomor tersebut belum diuji. Nama singkat TERAKOPIE digunakan pada katalog, header, metadata, dan manifest. Perubahan identitas sebelumnya tidak dicatat; kini dicatat sesuai permintaan terbaru.
+
+## Perbaikan form tambah/ubah: field wajib, upload foto Storage, dan tab admin
+
+**Permintaan:** tandai isian wajib dengan (*), ganti isian URL foto menjadi upload Supabase Storage, gunakan tab shadcn untuk Produk/Ganti password, dan rapikan penempatan kontrol.
+
+**Hasil:** nama dan harga diberi tanda * serta validasi browser/server; kategori, deskripsi, dan foto tetap opsional sesuai kontrak US-08/09. Harga kosong bukan 0; harga 0 valid, harus integer 0–2147483647. Semua error tetap Sonner tunggal dengan ID stabil. Input URL foto dihapus; Action mengabaikan URL foto dari browser. Komponen upload menyediakan pemilih JPG/PNG/WebP maksimal 3 MB, pratinjau, petunjuk format, dan tombol membatalkan pilihan baru. URL object pratinjau dibersihkan. Saat ubah tanpa file baru, kolom foto_url tidak disertakan dalam update sehingga foto database tidak ditimpa.
+
+Upload diproses server setelah getUser dengan publishable key/cookie, tanpa secret key. Tipe, ukuran, jumlah file, dan signature PNG/JPEG/WebP diperiksa server. Path memakai user ID dan UUID, upsert false, URL publik disimpan pada kolom foto_url yang sudah ada. Produk diperiksa sebelum upload pada Action ubah. Upload baru dibersihkan bila database secara eksplisit menolak penyimpanan; bila hasil jaringan tidak pasti, file tidak dihapus agar tidak merusak produk yang mungkin sudah tersimpan. Cleanup bersifat best effort. Foto lama tidak otomatis dihapus, termasuk foto bersama atau foto lokal. Tidak mengubah docs/schema.sql atau RLS tabel produk.
+
+**Konfigurasi Storage:** docs/storage.sql adalah setup manual terpisah untuk bucket publik foto-produk, batas 3 MB/MIME, dan policy authenticated pada folder milik user untuk insert/select/delete. SQL tidak dijalankan dalam sesi ini. Foto katalog publik; izin menulis tetap melalui sesi admin. SUPABASE_STORAGE_BUCKET ditambahkan ke .env.example dengan default foto-produk. Bila memakai bucket lain, sesuaikan setup/policy. Jika bucket sudah ada, periksa status public, batas/MIME, serta policy lama karena SQL tidak menimpa pengaturan bucket yang sudah ada. Izin Storage asli belum terverifikasi. Server Action body limit 4 MB mendukung file 3 MB plus multipart.
+
+**UI:** komponen shadcn Tabs berbasis @radix-ui/react-tabs ditambahkan; dependensi Radix Tabs diperlukan untuk permintaan ini. Tab aktif mengikuti URL, termasuk halaman tambah/ubah; rute dan proteksi server dipertahankan. Keluar tetap terpisah di kanan. Tombol AI dekat textarea, Batal di kiri dan Simpan sebagai aksi utama di kanan pada akhir form. Simpan menampilkan status Menyimpan dan nonaktif selama proses/AI.
+
+**Error diperbaiki:** React dapat mereset input file sesudah Action. File pilihan disimpan dalam ref dan dimasukkan kembali ke FormData saat submit ulang; kontrol file dipulihkan saat reset. Isian/pratinjau tetap tersedia ketika gagal. Tanda * tidak ikut dalam kalimat error validasi. Semua kegagalan tampil satu toast tanpa error inline.
+
+**Verifikasi:** npm run build -- --webpack berhasil. node --experimental-vm-modules tests/produk-storage.mjs lulus memakai Supabase simulasi: wajib login sebelum upload/mutasi, ID invalid, nama/harga invalid, harga 0, opsional kosong, file spoof/tipe/ukuran invalid, upload gagal, insert/update, mempertahankan foto lama, produk tidak ditemukan, cleanup upload baru, revalidate. Browser dengan Auth/database/Storage simulasi memeriksa tab Produk/Ganti password, validasi kosong satu toast, pemilih/pratinjau foto, gagal simpan mempertahankan isian, simpan ulang berhasil menuju admin, dan pengisian form ubah dengan foto lama. Tampilan 390 px diperiksa. Tidak mengunggah foto atau mengubah produk pada Supabase asli.
+
+**File:** components/Input.jsx, components/FormDenganToast.jsx, components/FormProduk.jsx, components/UploadFotoProduk.jsx, components/NavAdmin.jsx, components/ui/tabs.jsx, app/admin/actions.js, lib/validasi-produk.js, lib/supabase/foto-produk.js, next.config.mjs, .env.example, docs/storage.sql, package.json/package-lock.json, tests/produk-storage.mjs, PROMPTS.md.
+
+**Cara tes:** terapkan docs/storage.sql di SQL Editor Supabase, login admin, tambah produk uji dengan nama/harga/foto, simpan dan periksa foto di katalog. Ubah produk itu tanpa memilih foto untuk memeriksa foto lama bertahan; lalu pilih foto baru. Uji nama/harga kosong, harga 0, file bukan gambar/lebih dari 3 MB, kegagalan Storage, serta submit tanpa login. Periksa kategori/deskripsi kosong tetap boleh. Klik tab Produk/Ganti password dan refresh URL. Pengujian Storage, policy, dan upload nyata masih perlu dilakukan setelah konfigurasi tersebut tersedia.
+
+## Perbaikan lanjutan UI: seluruh field wajib, tombol admin, Sonner, dan layout responsif
+
+**Permintaan:** Kategori, Foto, dan Deskripsi wajib; tombol Keluar/akses admin lebih jelas; semua halaman responsif; Sonner tanpa tombol X. Ketentuan terbaru menggantikan catatan sebelumnya yang menyebut kategori, deskripsi, dan foto opsional.
+
+**Hasil:** seluruh field produk ditandai * pada tambah/ubah. Kategori dan deskripsi diperiksa setelah trim di server. Tambah harus mengunggah foto valid; ubah boleh mempertahankan foto yang sudah ada di database, namun produk tanpa foto harus diberi foto. URL foto dari browser tidak dijadikan bukti foto lama: Action ubah membaca foto_url dari database. Harga 0 tetap valid. Semua error tetap satu Sonner; Toaster tunggal memakai closeButton false.
+
+Keluar kini tombol outline dengan ikon, target minimal 44 px dan status Keluar… saat berjalan. Tautan footer menjadi tombol Masuk admin dengan ikon. Navigasi dapat membungkus pada layar sempit. Kontainer/form memakai lebar fleksibel dan min-width 0; nama/kategori panjang pada kartu serta detail dapat membungkus, deskripsi mempertahankan baris. Kontrol utama minimal 44 px. Tabel admin menjadi susunan dua kolom ringkas pada HP dan tabel biasa pada desktop; tidak membutuhkan geser horizontal. Tidak mengganti autentikasi, skema/RLS, atau memasang paket tambahan.
+
+**Verifikasi:** build Webpack berhasil. Tes tests/produk-storage.mjs diperbarui dan lulus dengan Supabase simulasi untuk field wajib, foto wajib pada tambah/ubah tanpa foto lama, mempertahankan foto lama, harga 0, validasi file, auth/ID, dan alur upload/mutasi. Browser dengan Auth/database simulasi memeriksa katalog, detail, admin, login, password, tambah, ubah, halaman tidak ditemukan, dan offline di lebar 320/390/1280 px; scrollWidth sama dengan lebar viewport di seluruh pemeriksaan. Screenshot admin desktop/390 px dan form tambah 390 px diperiksa. Browser memverifikasi validasi kosong satu toast tanpa tombol tutup. Ini pemeriksaan localhost dengan data simulasi; bukan upload/policy Storage asli atau pemeriksaan semua kemungkinan isi data.
+
+**File:** lib/validasi-produk.js, app/admin/actions.js, components/FormProduk.jsx, components/UploadFotoProduk.jsx, components/Input.jsx, components/NavAdmin.jsx, components/TombolKeluar.jsx, components/Footer.jsx, components/ui/sonner.jsx, components/ui/input.jsx, components/ui/button.jsx, components/KartuProduk.jsx, components/FormGantiPassword.jsx, components/TabelProduk.jsx, app/layout.jsx, app/produk/[id]/page.jsx, tests/produk-storage.mjs, PROMPTS.md.
+
+**Cara tes:** login, kosongkan masing-masing field wajib lalu simpan: satu toast, isian tetap tersedia. Ubah produk dengan foto lama tanpa memilih file baru: diperbolehkan; produk tanpa foto harus memilih gambar. Uji layar HP serta desktop, tombol Keluar, dan tombol Masuk admin di footer. Storage asli masih membutuhkan setup docs/storage.sql dan pengujian nyata seperti catatan sebelumnya.
+
+## Perbaikan kolom Aksi: ikon Ubah dan Hapus
+
+**Permintaan:** beri nama header kolom edit/hapus "Aksi"; kedua kontrol cukup ikon.
+
+**Hasil:** header Aksi terlihat pada tabel desktop. Ubah memakai ikon pensil dan Hapus ikon tempat sampah, ukuran target 44 px. aria-label mencantumkan nama produk dan title menjelaskan aksi; pending hapus menampilkan indikator proses. Konfirmasi yang menyebut nama produk, guard submit ganda, Action terautentikasi, serta toast tunggal dipertahankan. Tombol wrapper meneruskan size ke Button juga untuk tautan.
+
+**Verifikasi:** build Webpack berhasil; browser memverifikasi header, label aksesibilitas dan tampilan ikon pada desktop/390 px. Pengujian handler hapus simulasi lulus: batal tidak memanggil Action, nama pada konfirmasi, guard klik ganda, sukses refresh/satu toast, gagal tanpa refresh. Tidak menghapus produk toko asli.
+
+**File:** components/TabelProduk.jsx, components/TombolHapusProduk.jsx, components/Tombol.jsx, PROMPTS.md.
+
+**Cara tes:** buka /admin pada desktop untuk melihat header Aksi. Klik pensil untuk membuka form ubah. Klik tempat sampah dan batalkan konfirmasi untuk memastikan data tidak terhapus. Pengujian hapus sungguhan harus memakai produk uji khusus.
+
+## Perbaikan konfirmasi modal, durasi toast, ilustrasi kosong, dan pemilih gambar
+
+**Permintaan:** semua konfirmasi memakai modal, termasuk logout; Sonner hilang otomatis; data/pencarian kosong memiliki ilustrasi; upload memakai tombol berikon dengan pratinjau, nama file, dan tombol X.
+
+**Hasil:** ModalKonfirmasi reusable memakai dialog native dengan tombol shadcn dan token proyek, tanpa paket tambahan. showModal membuat latar inert dan membatasi fokus ke modal. Judul/deskripsi terhubung ke label aksesibilitas, fokus awal ke Batal, Escape membatalkan, dan fokus kembali ke pemicu setelah ditutup. Selama proses, tombol dan pembatalan Escape dinonaktifkan. Modal digunakan untuk hapus produk, keluar admin, dan penggantian deskripsi AI yang sudah terisi. Tidak ada lagi window.confirm/alert di app/components. Pembatalan tidak memanggil Action. Guard proses pada hapus, logout, dan AI tetap mencegah pengiriman berulang. Action logout tetap memakai getUser dan signOut server.
+
+Toaster tunggal memakai duration 3000 ms dan closeButton false. ID stabil dan pesan tunggal dipertahankan; toast dapat bertahan lebih lama ketika interaksi pengguna membuat Sonner menjeda timer.
+
+IlustrasiProdukKosong adalah SVG lokal sesuai token toko, dengan varian pencarian. ProdukKosong digunakan pada katalog, pencarian tanpa hasil, dan admin kosong; halaman tidak ditemukan juga mendapat ilustrasi. Error query tetap menampilkan Sonner, bukan dianggap daftar kosong. Kata pencarian ditampilkan sebagai teks React, bukan HTML.
+
+UploadFotoProduk menyembunyikan input file asli secara visual, memakai tombol berikon Pilih gambar/Ganti gambar. Setelah memilih, pratinjau, nama file yang dapat membungkus, ukuran file, dan tombol X tampil sejajar. X menghapus pilihan tanpa submit; pada form ubah, menghapus foto lama menandai hapus_foto sehingga server menolak penyimpanan tanpa pengganti. Foto Storage lama tidak dihapus dari bucket. Menghapus pilihan baru mengembalikan foto lama bila masih dipertahankan. File invalid menampilkan satu toast dan mempertahankan pilihan valid sebelumnya. File dipulihkan setelah reset form; object URL dibersihkan. Validasi format/ukuran/signature tetap server-side dan upload tetap memakai sesi admin.
+
+**Verifikasi:** npm run build -- --webpack berhasil. tests/produk-storage.mjs lulus, termasuk penolakan simpan sesudah foto lama ditandai dihapus tanpa pengganti. Browser memakai Auth/database/Storage lokal simulasi memverifikasi modal hapus dan logout batal: penghitung DELETE/signOut tetap 0; setelah konfirmasi masing-masing menjadi 1. Konfirmasi logout mengarah ke /admin/login. Modal AI batal mempertahankan deskripsi. Escape menutup modal dan mengembalikan fokus. Pemilih foto menampilkan icon-192.png, pratinjau/ukuran/tombol X; hapus foto menimbulkan satu validasi wajib dan fokus ke tombol Pilih gambar. Pemilihan HTML ditolak tanpa mengganti foto PNG. Toast invalid teramati hilang setelah menunggu 4 detik dan tidak memiliki tombol tutup. Ilustrasi katalog kosong, pencarian tanpa hasil, dan admin kosong diperiksa. Screenshot modal/foto/pencarian pada 390 px diperiksa; admin kosong tidak overflow pada 320/390/1280 px.
+
+**Batas:** seluruh Action browser memakai layanan lokal simulasi, bukan akun atau produk toko asli. Tidak ada penghapusan produk asli, upload Storage asli, atau panggilan Gemini asli. Konfigurasi bucket/policy dari docs/storage.sql masih perlu diverifikasi pada Supabase sebenarnya. Ilustrasi tidak berasal dari data Maps maupun foto toko.
+
+**File:** components/ModalKonfirmasi.jsx, components/TombolHapusProduk.jsx, components/TombolKeluar.jsx, components/TombolDeskripsiAI.jsx, components/ui/sonner.jsx, components/UploadFotoProduk.jsx, components/IlustrasiProdukKosong.jsx, components/ProdukKosong.jsx, app/page.jsx, app/admin/page.jsx, app/not-found.jsx, app/admin/actions.js, tests/produk-storage.mjs, PROMPTS.md.
+
+**Cara tes:** buka modal Hapus/Keluar lalu Batal atau Escape: data/sesi bertahan. Konfirmasi Keluar: kembali ke login. Pengujian Hapus sungguhan hanya untuk produk uji. Pada deskripsi terisi, batalkan modal AI dan periksa teks tetap ada. Pilih gambar, periksa nama/pratinjau, klik X, dan coba simpan tanpa foto untuk memeriksa satu validasi. Coba file invalid dan gagal upload; semua isian bertahan. Gunakan katalog kosong/pencarian tanpa hasil untuk memeriksa ilustrasi. Tunggu sekitar 3 detik tanpa hover/fokus pada toast untuk memeriksa auto-dismiss.
+
+
+## Perbaikan notifikasi sukses, pagination admin, dan loading
+
+**Hasil:** login, logout, tambah, dan ubah produk membawa notifikasi sukses sekali pakai melalui cookie server yang habis dalam 60 detik dan dikonsumsi Server Action. Hapus dan ganti password tetap memakai hasil Action/Sonner dengan ID stabil. Tidak ada pesan error inline ganda. Footer menyembunyikan tombol Masuk admin pada semua rute /admin. Ilustrasi halaman tidak ditemukan yang sudah ada dipertahankan dan diperiksa.
+
+Admin mengambil 12 produk per halaman dari database, count exact dan urutan created_at/id stabil. Nomor halaman divalidasi. Halaman di luar batas kembali ke halaman terakhir, termasuk setelah produk terakhir di suatu halaman dihapus. Katalog tetap menggunakan pagination server 12 produk. Query katalog dan admin dipisah dalam komponen async di dalam Suspense; loading skeleton tersedia untuk katalog, daftar admin, detail produk, dan form ubah. Shell dan kontrol tetap terlihat saat daftar memuat.
+
+**Perbaikan tambahan:** form edit tidak mengirim entry file kosong jika pengguna mempertahankan foto lama. Ini memperbaiki penolakan format foto saat edit tanpa gambar baru. Validasi foto wajib dan penghapusan pilihan tetap dijalankan server.
+
+**Verifikasi:** build Webpack berhasil. tests/notifikasi-paginasi.mjs dan tests/produk-storage.mjs lulus melalui node --experimental-vm-modules. Browser memakai database/Auth/Storage lokal simulasi memeriksa login/tambah/edit/hapus/logout sukses, modal logout, 25 produk dalam 3 halaman, serta perpindahan ke halaman kedua setelah satu produk di halaman terakhir dihapus. Edit tanpa foto baru berhasil sesudah perbaikan. Skeleton katalog diperiksa dengan jeda fetch 8 detik, ilustrasi 404 diperiksa pada 390 px. Tidak mengubah akun/password/produk Supabase asli; ganti password diuji di Action simulasi, bukan perubahan password melalui browser.
+
+**File:** app/admin/actions.js, app/admin/page.jsx, app/page.jsx, app/layout.jsx, lib/notifikasi-admin.js, lib/paginasi-admin.js, components/NotifikasiAdmin.jsx, components/AksesAdminFooter.jsx, components/Footer.jsx, components/DaftarProdukAdmin.jsx, components/DaftarKatalog.jsx, components/ui/skeleton.jsx, components/SkeletonKatalog.jsx, components/SkeletonDaftarAdmin.jsx, components/SkeletonDetailProduk.jsx, components/SkeletonFormProduk.jsx, app/loading.jsx, app/admin/loading.jsx, app/produk/[id]/loading.jsx, app/admin/produk/[id]/ubah/loading.jsx, components/FormProduk.jsx, tests/notifikasi-paginasi.mjs, tests/produk-storage.mjs.
+
+**Cara tes:** lakukan tiap aksi pada akun dan produk uji; pastikan satu toast sukses muncul, hilang otomatis, dan tidak muncul lagi setelah refresh. Isi lebih dari 12 produk, pindah halaman, lalu hapus produk terakhir di halaman akhir. Gunakan network throttling untuk memeriksa skeleton dan buka URL tidak ada untuk ilustrasi. Pada /admin dan subhalamannya, tombol Masuk admin tidak tampil.
+
+## Perbaikan panduan Storage dan penghapusan aset dummy lokal
+
+**Hasil:** panduan docs/setup-storage-ai.md menjelaskan environment, bucket publik foto-produk, policy, format JPG/PNG/WebP maksimal 3 MB, restart dan deploy ulang. Error Storage membedakan bucket belum tersedia dan policy/sesi yang menolak upload. Koneksi upload tetap sesi admin, bukan secret key.
+
+Data contoh lib/data-contoh.js dan enam SVG produk dummy lokal dihapus. Bagian seed contoh di docs/schema.sql dihapus, tanpa mengubah struktur tabel/RLS. docs/hapus-data-contoh.sql menyediakan SELECT pemeriksaan dan DELETE terbatas pada nama/harga/foto persis seed lama. Skrip belum dijalankan pada Supabase asli; gambar Storage tidak dihapus karena belum teridentifikasi sebagai dummy.
+
+**Batas:** 14 produk asli beserta foto belum diimpor. Pencarian publik belum menyediakan 14 nama, harga, serta foto resmi yang bisa diverifikasi; tidak membuat harga atau foto toko palsu. Bucket/policy asli masih perlu dipasang pengguna melalui dashboard Supabase. Pengujian upload memakai simulasi.

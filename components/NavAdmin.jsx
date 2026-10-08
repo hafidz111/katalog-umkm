@@ -1,16 +1,20 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import TombolKeluar from "@/components/TombolKeluar";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function NavAdmin() {
-  return (
-    <nav className="flex flex-wrap items-center gap-x-5 gap-y-2 border-b border-garis pb-4 text-sm">
-      <Link href="/admin" className="font-semibold hover:text-utama">
-        Produk
-      </Link>
-      <Link href="/admin/password" className="font-semibold hover:text-utama">
-        Ganti password
-      </Link>
-      <TombolKeluar />
-    </nav>
-  );
+  const pathname = usePathname();
+  const value = pathname === "/admin/password" ? "password" : "produk";
+  return <nav aria-label="Navigasi admin" className="flex flex-wrap items-center justify-between gap-3 border-b border-garis pb-4">
+    <Tabs className="min-w-0" value={value} activationMode="manual">
+      <TabsList aria-label="Halaman admin">
+        <TabsTrigger value="produk" asChild><Link href="/admin" aria-current={value === "produk" ? "page" : undefined}>Produk</Link></TabsTrigger>
+        <TabsTrigger value="password" asChild><Link href="/admin/password" aria-current={value === "password" ? "page" : undefined}>Ganti password</Link></TabsTrigger>
+      </TabsList>
+    </Tabs>
+    <TombolKeluar />
+  </nav>;
 }

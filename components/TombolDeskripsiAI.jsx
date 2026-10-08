@@ -1,18 +1,20 @@
 "use client";
 
 import { useRef, useState } from "react";
+import ModalKonfirmasi from "@/components/ModalKonfirmasi";
 import Tombol from "@/components/Tombol";
 import { buatDeskripsiProdukAdmin } from "@/app/admin/actions";
 import { tampilkanError } from "@/lib/toast";
 
 export default function TombolDeskripsiAI({ snapshot, onHasil, onPending, disabled }) {
+  const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const berjalan = useRef(false);
 
   async function buat() {
     if (berjalan.current || disabled) return;
     const awal = snapshot();
-    if (awal.values.deskripsi.trim() && !window.confirm("Ganti deskripsi yang sudah diisi dengan deskripsi AI?")) return;
+    setOpen(false);
     berjalan.current = true;
     setPending(true);
     onPending(true);
@@ -33,7 +35,11 @@ export default function TombolDeskripsiAI({ snapshot, onHasil, onPending, disabl
     }
   }
 
-  return <Tombol type="button" varian="garis" disabled={disabled || pending} onClick={buat}>
+  return <>
+    <ModalKonfirmasi open={open} onClose={() => setOpen(false)} onConfirm={buat} judul="Ganti deskripsi?"
+      deskripsi="Deskripsi yang sudah diisi akan diganti dengan hasil AI. Anda dapat meninjau dan mengedit hasilnya sebelum menyimpan." labelKonfirmasi="Buat deskripsi AI" />
+    <Tombol type="button" varian="garis" disabled={disabled || pending} onClick={() => { if (snapshot().values.deskripsi.trim()) setOpen(true); else buat(); }}>
     {pending ? "Membuat deskripsi…" : "Buat deskripsi AI"}
-  </Tombol>;
+  </Tombol>
+  </>;
 }

@@ -1,29 +1,21 @@
+import { Suspense } from "react";
+import DaftarProdukAdmin from "@/components/DaftarProdukAdmin";
+import SkeletonDaftarAdmin from "@/components/SkeletonDaftarAdmin";
 import NavAdmin from "@/components/NavAdmin";
-import TabelProduk from "@/components/TabelProduk";
 import Tombol from "@/components/Tombol";
 import ErrorToast from "@/components/ErrorToast";
 import { redirect } from "next/navigation";
 import { buatSupabaseSession } from "@/lib/supabase/session";
+import { bacaHalamanAdmin } from "@/lib/paginasi-admin";
 
 export const dynamic = "force-dynamic";
 
-export default async function HalamanAdmin() {
+export default async function HalamanAdmin({ searchParams }) {
   const supabase = await buatSupabaseSession({ readOnly: true });
   const { data: sesi, error: errorSesi } = await supabase.auth.getUser();
   if (errorSesi || !sesi?.user) redirect("/admin/login");
 
-  let daftarProduk = [];
-  let pesanError = "";
-  try {
-    const { data, error } = await supabase
-      .from("produk")
-      .select("id, nama, harga, deskripsi, foto_url, kategori, created_at")
-      .order("created_at", { ascending: false });
-    if (error) throw error;
-    daftarProduk = data ?? [];
-  } catch {
-    pesanError = "Gagal mengambil daftar produk. Silakan muat ulang halaman. Jika masalah berlanjut, periksa koneksi dan izin akses database Supabase.";
-  }
+  const halaman = bacaHalamanAdmin((await searchParams)?.page);
 
   return (
     <div className="flex flex-col gap-6 py-8">
@@ -33,12 +25,12 @@ export default async function HalamanAdmin() {
         {/* US-08 (bonus): tambah produk */}
         <Tombol href="/admin/produk/baru">Tambah produk</Tombol>
       </div>
-      {pesanError ? (
-        <ErrorToast pesan={pesanError} id="daftar-produk-admin" />
-      ) : daftarProduk.length === 0 ? (
-        <p className="text-teks-lembut">Belum ada produk</p>
+      {halaman === null ? (
+        <ErrorToast pesan="Nomor halaman tidak valid. Buka kembali daftar produk dari tab Produk." id="daftar-produk-admin" />
       ) : (
-        <TabelProduk daftarProduk={daftarProduk} />
+        <Suspense key={halaman} fallback={<SkeletonDaftarAdmin />}>
+          <DaftarProdukAdmin supabase={supabase} halaman={halaman} />
+        </Suspense>
       )}
     </div>
   );

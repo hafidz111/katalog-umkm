@@ -8,7 +8,8 @@ export function Toaster() {
     <Sonner
       theme="light"
       position="top-center"
-      closeButton
+      duration={3000}
+      closeButton={false}
       icons={{
         success: <CircleCheckIcon className="size-4" />,
         info: <InfoIcon className="size-4" />,

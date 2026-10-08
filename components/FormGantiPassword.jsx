@@ -15,7 +15,7 @@ export default function FormGantiPassword() {
   return (
     <>
       <HasilToast key={state.percobaan} pesan={state.pesan} berhasil={state.berhasil} id="ganti-password" />
-      <FormDenganToast action={action} className="flex max-w-sm flex-col gap-4" aria-busy={pending}>
+      <FormDenganToast action={action} className="flex w-full min-w-0 max-w-sm flex-col gap-4" aria-busy={pending}>
         <Input
           label="Password baru"
           name="password_baru"
@@ -32,7 +32,7 @@ export default function FormGantiPassword() {
           minLength={8}
           required
         />
-        <Tombol type="submit" className="self-start" disabled={pending}>
+        <Tombol type="submit" className="w-full sm:w-auto sm:self-end" disabled={pending}>
           Simpan password
         </Tombol>
       </FormDenganToast>

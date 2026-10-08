@@ -9,7 +9,7 @@ export default function FormDenganToast({ children, ...props }) {
     const form = field.form;
     // Browser memicu invalid untuk setiap field. Hanya laporkan field pertama.
     if (form?.querySelector(":invalid") !== field) return;
-    const label = field.labels?.[0]?.textContent?.trim() || "Isian";
+    const label = field.labels?.[0]?.textContent?.replace(/\*/g, "").trim() || "Isian";
     const validity = field.validity;
     let pesan = `${label} tidak valid. Periksa kembali isian ini.`;
     if (validity.valueMissing) pesan = `${label} wajib diisi.`;

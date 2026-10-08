@@ -1,0 +1,142 @@
+[
+  {
+    "nama": "Espresso",
+    "harga": 10000,
+    "kategori": "Kopi",
+    "deskripsi": "Espresso, pilihan kopi dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "espresso",
+    "foto": "assets/produk-toko/espresso.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1553742198-6eea5ac42a24?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://id.scribd.com/document/1044782563/Terakopie-4-Oktober-2025"
+  },
+  {
+    "nama": "Americano",
+    "harga": 18000,
+    "kategori": "Kopi",
+    "deskripsi": "Americano, pilihan kopi dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "americano",
+    "foto": "assets/produk-toko/americano.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1551030173-122aabc4489c?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://id.scribd.com/document/1044782563/Terakopie-4-Oktober-2025"
+  },
+  {
+    "nama": "Matcha Latte",
+    "harga": 22000,
+    "kategori": "Non-kopi",
+    "deskripsi": "Matcha Latte, pilihan non-kopi dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "matcha-latte",
+    "foto": "assets/produk-toko/matcha-latte.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1560148196-df61132466ce?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://id.scribd.com/document/1044782563/Terakopie-4-Oktober-2025"
+  },
+  {
+    "nama": "Choco Hazelnut",
+    "harga": 24000,
+    "kategori": "Non-kopi",
+    "deskripsi": "Choco Hazelnut, pilihan non-kopi dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "choco-hazelnut",
+    "foto": "assets/produk-toko/choco-hazelnut.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1512035986687-f3cc6aefba8d?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://id.scribd.com/document/1044782563/Terakopie-4-Oktober-2025"
+  },
+  {
+    "nama": "Peppermint Tea",
+    "harga": 16000,
+    "kategori": "Teh",
+    "deskripsi": "Peppermint Tea, pilihan teh dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "peppermint-tea",
+    "foto": "assets/produk-toko/peppermint-tea.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1498481548071-4d439c62cd6e?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://id.scribd.com/document/1044782563/Terakopie-4-Oktober-2025"
+  },
+  {
+    "nama": "Chamomile Tea",
+    "harga": 16000,
+    "kategori": "Teh",
+    "deskripsi": "Chamomile Tea, pilihan teh dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "chamomile-tea",
+    "foto": "assets/produk-toko/chamomile-tea.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1719004322337-01d65ca75269?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://id.scribd.com/document/1044782563/Terakopie-4-Oktober-2025"
+  },
+  {
+    "nama": "Kentang Goreng",
+    "harga": 15000,
+    "kategori": "Camilan",
+    "deskripsi": "Kentang Goreng, pilihan camilan dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "kentang-goreng",
+    "foto": "assets/produk-toko/kentang-goreng.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1688978181542-87a886a16fbe?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://id.scribd.com/document/1044782563/Terakopie-4-Oktober-2025"
+  },
+  {
+    "nama": "V60 Bener Meriah",
+    "harga": 18000,
+    "kategori": "Manual brew",
+    "deskripsi": "V60 Bener Meriah, pilihan manual brew dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "v60-bener-meriah",
+    "foto": "assets/produk-toko/v60-bener-meriah.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1620051524446-5160985790e1?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://id.scribd.com/document/1044782563/Terakopie-4-Oktober-2025"
+  },
+  {
+    "nama": "Kopi Robusta 250 g",
+    "harga": 55000,
+    "kategori": "Biji kopi",
+    "deskripsi": "Kopi Robusta 250 g, pilihan biji kopi dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "robusta-250g",
+    "foto": "assets/produk-toko/robusta-250g.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1649790442619-39d05db11246?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://id.scribd.com/document/1044782563/Terakopie-4-Oktober-2025"
+  },
+  {
+    "nama": "Kopi Robusta 500 g",
+    "harga": 90000,
+    "kategori": "Biji kopi",
+    "deskripsi": "Kopi Robusta 500 g, pilihan biji kopi dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "robusta-500g",
+    "foto": "assets/produk-toko/robusta-500g.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1605712916471-7fc8b7b1c372?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://id.scribd.com/document/1044782563/Terakopie-4-Oktober-2025"
+  },
+  {
+    "nama": "Houseblend 200 g",
+    "harga": 70000,
+    "kategori": "Biji kopi",
+    "deskripsi": "Houseblend 200 g, pilihan biji kopi dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "houseblend-200g",
+    "foto": "assets/produk-toko/houseblend-200g.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1643410223482-113e58195261?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://id.scribd.com/document/1044782563/Terakopie-4-Oktober-2025"
+  },
+  {
+    "nama": "Kopi Arabika Gayo Honey Process 200 g",
+    "harga": 105000,
+    "kategori": "Biji kopi",
+    "deskripsi": "Kopi Arabika Gayo Honey Process 200 g, pilihan biji kopi dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "gayo-honey-200g",
+    "foto": "assets/produk-toko/gayo-honey-200g.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1573883844855-f364441ac463?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://shopee.co.id/alleya.store"
+  },
+  {
+    "nama": "Kopi Arabika Papua Fullwash 200 g",
+    "harga": 105000,
+    "kategori": "Biji kopi",
+    "deskripsi": "Kopi Arabika Papua Fullwash 200 g, pilihan biji kopi dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "papua-fullwash-200g",
+    "foto": "assets/produk-toko/papua-fullwash-200g.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1753837787497-84ce94c9bf01?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://shopee.co.id/alleya.store"
+  },
+  {
+    "nama": "Kopi Arabika Bali Kintamani Honey 200 g",
+    "harga": 100000,
+    "kategori": "Biji kopi",
+    "deskripsi": "Kopi Arabika Bali Kintamani Honey 200 g, pilihan biji kopi dalam katalog TERAKOPIE. Foto merupakan ilustrasi produk.",
+    "slug": "bali-kintamani-200g",
+    "foto": "assets/produk-toko/bali-kintamani-200g.jpg",
+    "sumber_foto": "https://images.unsplash.com/photo-1741053649094-90c2bacb90ac?fm=jpg&q=60&w=3000",
+    "sumber_data": "https://shopee.co.id/alleya.store"
+  }
+]

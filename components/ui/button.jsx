@@ -15,10 +15,10 @@ export const buttonVariants = cva(
         link: "text-utama underline-offset-4 hover:underline",
       },
       size: {
-        default: "px-4 py-2.5",
+        default: "min-h-11 px-4 py-2.5",
         sm: "px-3 py-2",
         lg: "px-6 py-3",
-        icon: "size-10",
+        icon: "size-11",
       },
     },
     defaultVariants: { variant: "default", size: "default" },
