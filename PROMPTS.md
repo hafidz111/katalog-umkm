@@ -96,7 +96,7 @@ Menambahkan konfigurasi shadcn/ui di `components.json`, komponen Button/Input/Te
 Pesan error inline katalog diganti dengan toast. `lib/toast.js` menjadi tempat pemanggilan toast, sementara `ErrorToast` memakai ID stabil dan penjagaan efek agar tidak tampil dua kali. `FormDenganToast` menonaktifkan popup validasi bawaan dan hanya melaporkan field invalid pertama. Validasi form kosong dan login salah berulang diperiksa di browser: hanya satu toast untuk kejadian yang sama.
 
 **Status bonus:**
-Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 juga telah dikerjakan pada bagian tersendiri; US-10 telah dikerjakan pada bagian tersendiri; US-11 sampai US-14 belum dikerjakan.
+Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 juga telah dikerjakan pada bagian tersendiri; US-10 telah dikerjakan pada bagian tersendiri; US-11 (pencarian) telah dikerjakan pada bagian tersendiri; US-12 sampai US-14 belum dikerjakan.
 
 ### Diagnosis produk tidak muncul: jenis kunci Supabase salah
 
@@ -237,3 +237,98 @@ Tabel dan produk uji berhasil dimuat di browser lokal. Saat tombol membuka konfi
 
 **Cara tes manual:**
 Login dan buat produk khusus pengujian. Klik Hapus, pastikan nama produk muncul, lalu Batal: produk harus tetap ada tanpa toast sukses. Ulangi dan setujui: tombol nonaktif selama proses, produk hilang dari daftar, dan satu toast sukses muncul. Periksa katalog serta detail produk yang dihapus. Untuk gagal database, ID invalid, serta pemanggilan Action tanpa login, pengujian simulasi memastikan tidak ada keberhasilan palsu atau penghapusan tanpa sesi.
+
+
+## US-11 Pencarian nama produk dan pagination katalog
+
+**Prompt:**
+Tambahkan pencarian nama pada katalog publik melalui URL dan query database di server, validasi karakter/panjang, pagination server dengan urutan stabil, pesan kosong yang sesuai, satu toast kegagalan, serta periksa tampilan 390 px. Filter kategori tidak diperlukan.
+
+**Hasil:**
+`app/page.jsx` membaca `await searchParams`, menampilkan form GET dengan komponen Input dan Tombol yang tersedia, serta mempertahankan kata pencarian dari URL saat refresh. Form hanya mengirim q sehingga pencarian baru dimulai dari halaman pertama. Tautan Hapus pencarian kembali ke katalog normal. Tampilan KartuProduk tidak diubah.
+
+**Perbaikan:**
+Helper server `lib/katalog.js` memvalidasi q sebagai satu string maksimal 100 karakter, menolak karakter kontrol dan parameter berulang, melakukan trim, serta memvalidasi nomor halaman sebagai bilangan bulat positif maksimal enam digit. Pencarian tidak peka huruf besar/kecil memakai filter database `nama imatch` dengan seluruh metakarakter regex di-escape. %, _, *, backslash, tanda kurung, koma, dan kutip diperlakukan sebagai teks literal, bukan wildcard atau ekspresi pencarian. Query mengambil maksimal 12 baris melalui range dan count exact, dengan urutan created_at lalu id menurun. Tautan pagination memakai URLSearchParams untuk mempertahankan q dan encoding. Halaman melebihi jumlah hasil mengambil ulang halaman terakhir dengan query terbatas. Katalog kosong menampilkan “Belum ada produk”; pencarian tanpa hasil menampilkan “Tidak ada produk yang cocok dengan pencarian”. Validasi/query gagal menggunakan ErrorToast dan helper Sonner ber-ID stabil tanpa error inline.
+
+**Verifikasi:**
+Build `npm run build -- --webpack` berhasil. Pengujian helper dengan database simulasi lulus untuk hasil/tanpa hasil, q kosong, panjang berlebihan/karakter kontrol/parameter berulang, nomor halaman invalid, karakter khusus literal, pagination 12 baris, urutan ID stabil, halaman di luar rentang, encoding tautan, dan kegagalan query. Browser memakai aplikasi hasil build dan Supabase API simulasi dengan 25 produk: pencarian kopi menghasilkan 14 produk dalam dua halaman (12 dan 2); pindah halaman mempertahankan q dan refresh mempertahankan halaman/isian; perubahan pencarian memulai halaman pertama; karakter khusus cocok satu produk; tanpa hasil menampilkan pesan yang sesuai; Hapus pencarian mengembalikan katalog normal. Kegagalan API menampilkan tepat satu toast Sonner. Pada viewport 390 × 844, screenshot diperiksa dan lebar konten tetap 390 px tanpa overflow horizontal. Pengujian ini tidak membaca atau mengubah database Supabase asli; kecocokan filter pada database asli belum diuji.
+
+**File diubah:**
+`app/page.jsx`, `lib/katalog.js`, dan `PROMPTS.md`.
+
+**Cara tes manual:**
+Buka `/?q=kopi`, cocokkan hasil dengan nama produk di database, pindah ke Berikutnya lalu refresh. Coba kata yang tidak ada serta nama berisi %, _, *, atau tanda kurung. Ubah kata pencarian dari halaman kedua dan pastikan kembali ke halaman pertama; klik Hapus pencarian untuk katalog normal. Periksa juga layar HP sekitar 390 px. Pagination muncul jika hasil melebihi 12 produk.
+
+## Perbaikan US-11: hapus tombol tambahan dan filter nama/harga
+
+**Prompt:**
+Hapus tombol “Hapus pencarian” dan buat filter berdasarkan harga, nama produk, atau keduanya.
+
+**Hasil:**
+Tombol Hapus pencarian dihapus; kolom search tetap menyediakan kontrol hapus bawaan browser. FormPencarian memakai Input dan Tombol shadcn yang tersedia, dengan pilihan Nama produk, Harga, dan Keduanya. Pilihan harga membuka kolom nominal rupiah, pilihan keduanya membuka nama serta harga. Harga dicocokkan persis melalui eq di database; keduanya menggabungkan kecocokan nama dan harga (AND). Kolom kosong tidak membatasi hasil. Mode, nama, harga, dan halaman tersimpan dalam URL; submit pencarian kembali ke halaman pertama.
+
+**Perbaikan:**
+Validasi server membatasi mode yang diterima, harga bulat 0–2.147.483.647, serta menolak harga negatif/pecahan/melebihi batas. Harga 0 tetap diterapkan sebagai filter. Filter yang tidak sesuai mode diabaikan. Pagination mempertahankan mode dan harga. Error tetap melalui Sonner, query Supabase tetap di server, dan KartuProduk tidak diubah.
+
+**Verifikasi:**
+Build Webpack berhasil. Pengujian query simulasi lulus untuk nama, harga, kombinasi AND, harga nol, harga invalid, mode invalid, tautan pagination, dan seluruh pemeriksaan pencarian sebelumnya. Browser dengan database simulasi memverifikasi pergantian mode, pencarian keduanya, pagination/refresh yang mempertahankan filter, submit harga yang kembali ke halaman pertama, dan hasil kosong harga 0. Screenshot viewport 390 × 844 diperiksa tanpa overflow horizontal. Database Supabase asli belum diuji atau diubah.
+
+**File diubah:**
+`app/page.jsx`, `lib/katalog.js`, `components/FormPencarian.jsx`, dan `PROMPTS.md`.
+
+**Cara tes:**
+Pilih Harga, isi nominal tanpa pemisah (contoh 15000), lalu Cari. Pilih Keduanya, isi nama dan harga, lalu periksa hanya produk yang cocok dengan kedua isian. Pindah halaman dan refresh untuk memastikan isian tetap tersimpan. Kosongkan kolom lalu Cari untuk menghapus batasan pencarian.
+
+## Perbaikan US-11: ikon filter dan checkbox urutan
+
+**Prompt:**
+Filter berupa ikon Phosphor sejajar pencarian; klik ikon membuka checkbox urutan nama dan harga.
+
+**Hasil:**
+Pilihan mode/kolom harga diganti dengan ikon Funnel SVG lokal bergaya Phosphor tanpa paket tambahan. Ikon berada satu baris dengan kolom pencarian dan tombol Cari. Panel membuka checkbox Nama (A–Z) dan Harga (termurah); keduanya dapat dipilih. Tekan Cari untuk menerapkan. Jika keduanya aktif, prioritas urutan nama kemudian harga, dengan ID sebagai pengikat urutan stabil. Tanpa pilihan, urutan terbaru tetap dipakai. Pencarian nama, urutan, dan pagination tetap melalui server/database dan URL.
+
+**Perbaikan:**
+Server hanya menerima urutan nama/harga, menolak nilai tidak dikenal/duplikat, serta menormalkan prioritas. Panel menyediakan label aksesibel, status expanded, dapat ditutup dengan Escape atau perpindahan fokus keluar. Parameter mode/harga lama tidak lagi menjadi filter nominal. Tampilan KartuProduk dipertahankan.
+
+**Verifikasi:**
+Build Webpack berhasil. Pengujian helper simulasi memeriksa urutan database nama, harga, kombinasi, ID stabil, validasi urutan, URL pagination, serta pengujian pencarian sebelumnya. Browser simulasi memverifikasi buka panel, centang dua checkbox, submit ke URL, checkbox tetap terpilih setelah pemuatan halaman, dan tautan pagination membawa pilihan. Screenshot 390 px diperiksa dengan lebar konten 390 px tanpa overflow. Mock browser tidak mensimulasikan sortir data; susunan query database diperiksa lewat pengujian helper. Database Supabase asli belum diuji.
+
+**File diubah:**
+`components/FormPencarian.jsx`, `components/IkonFilter.jsx`, `app/page.jsx`, `lib/katalog.js`, dan `PROMPTS.md`.
+
+**Cara tes:**
+Klik ikon filter di sebelah kolom pencarian, centang Nama atau Harga lalu Cari. Centang keduanya untuk urutan nama kemudian harga. Pindah halaman atau refresh untuk memeriksa pilihan tetap tersimpan. Hapus centang keduanya untuk kembali ke urutan terbaru.
+
+## Perbaikan US-11: checkbox otomatis, debounce, dan label ringkas
+
+**Prompt:**
+Checkbox langsung menerapkan filter, pencarian menggunakan debounce, dan hapus teks “Cari nama produk”.
+
+**Hasil:**
+Checkbox urutan langsung memanggil navigasi server lewat router.replace; pencarian otomatis setelah 400 ms berhenti mengetik. Timer sebelumnya dibatalkan saat mengetik lagi, memilih urutan, submit, atau komponen dilepas. Tombol Cari/Enter tetap menerapkan segera. URL tetap memuat q dan urutan, perubahan memulai halaman pertama, dan posisi scroll dipertahankan. Label terlihat dihapus; aria-label tetap tersedia untuk aksesibilitas. Instruksi menekan Cari pada panel dihapus/dipersingkat.
+
+**Perbaikan:**
+Key yang menyebabkan FormPencarian dimuat ulang setiap URL berubah dihapus agar fokus dan panel tetap terjaga. Isian dikendalikan di client tanpa akses Supabase; query dan validasi tetap pada server. Perubahan URL memakai replace untuk menghindari penumpukan riwayat tiap kata yang diketik.
+
+**Verifikasi:**
+Build Webpack berhasil. Browser dengan database simulasi memverifikasi hasil dan URL berubah setelah mengetik tanpa submit, checkbox nama dan harga langsung masuk URL tanpa tombol Cari, panel tetap terbuka setelah centang, dan pengetikan cepat te → teh berakhir pada hasil/URL teh dengan filter tetap aktif. Tampilan 390 px diperiksa melalui screenshot; label terlihat sudah hilang dan fokus kolom tetap ada saat hasil berubah. Database asli belum diuji.
+
+**File diubah:**
+`components/FormPencarian.jsx`, `app/page.jsx`, dan `PROMPTS.md`.
+
+## Perbaikan US-11: empat pilihan urutan tanpa checkbox
+
+**Prompt:**
+Ganti checkbox dengan pilihan nama A–Z, Z–A, harga termurah, dan harga termahal.
+
+**Hasil:**
+Panel ikon filter sekarang menampilkan empat tombol pilihan tunggal. Klik langsung menerapkan, menutup panel, dan mengembalikan fokus ke ikon. Pilihan aktif diberi warna utama. Pencarian debounce 400 ms tetap berlaku. URL menyimpan satu urut: nama-az, nama-za, harga-asc, atau harga-desc. Pagination membawa pilihan tersebut. Server melakukan order nama/harga naik/turun sesuai pilihan, kemudian ID sebagai pengikat stabil. Nilai urut invalid atau berulang ditolak melalui Sonner.
+
+**Verifikasi:**
+Build Webpack berhasil. Pengujian helper simulasi lulus untuk keempat pasangan kolom/arah order, ID stabil, validasi pilihan tunggal, tautan pagination, dan seluruh pengujian pencarian sebelumnya. Browser simulasi memverifikasi menu empat pilihan, klik Nama Z–A dan Harga termahal langsung memperbarui URL, panel tertutup, serta pilihan aktif saat dibuka lagi. Screenshot 390 px diperiksa. Mock browser tidak mengurutkan data; query order diverifikasi melalui pengujian helper. Database Supabase asli belum diuji.
+
+**File diubah:**
+`components/FormPencarian.jsx`, `lib/katalog.js`, `app/page.jsx`, dan `PROMPTS.md`.
+
+**Cara tes:**
+Klik ikon filter lalu pilih salah satu urutan; hasil langsung diperbarui. Coba semua pilihan dan refresh/pindah halaman untuk memastikan pilihan bertahan.
