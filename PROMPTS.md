@@ -96,7 +96,7 @@ Menambahkan konfigurasi shadcn/ui di `components.json`, komponen Button/Input/Te
 Pesan error inline katalog diganti dengan toast. `lib/toast.js` menjadi tempat pemanggilan toast, sementara `ErrorToast` memakai ID stabil dan penjagaan efek agar tidak tampil dua kali. `FormDenganToast` menonaktifkan popup validasi bawaan dan hanya melaporkan field invalid pertama. Validasi form kosong dan login salah berulang diperiksa di browser: hanya satu toast untuk kejadian yang sama.
 
 **Status bonus:**
-Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 sampai US-14 belum dikerjakan.
+Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 juga telah dikerjakan pada bagian tersendiri; US-10 sampai US-14 belum dikerjakan.
 
 ### Diagnosis produk tidak muncul: jenis kunci Supabase salah
 
@@ -192,3 +192,24 @@ Build Webpack berhasil. Pengujian Supabase simulasi memeriksa penolakan tanpa lo
 
 **Cara tes database asli:**
 Login, buka `/admin/produk/baru`, isi produk uji dengan nama yang jelas, harga 0 atau harga valid lain, lalu Simpan produk. Cocokkan baris pada `/admin`, katalog, dan Supabase. Tanpa login, halaman harus dialihkan ke login; pengujian Action simulasi juga memastikan insert tidak dipanggil tanpa sesi valid.
+
+
+## US-09 Ubah produk
+
+**Prompt:**
+Hubungkan halaman `/admin/produk/[id]/ubah` dan form ke Supabase dengan sesi admin, validasi ID bigint serta login di server, gunakan validasi field US-08, pertahankan isian saat gagal, lalu revalidate admin/katalog/detail dan kembali ke `/admin` setelah update berhasil. Hapus catatan belum aktif, pertahankan tampilan serta tombol Batal, dan jangan mengubah RLS/skema.
+
+**Hasil:**
+Halaman ubah tetap Server Component, memakai `await params`, koneksi cookie admin read-only, dan query produk berdasarkan ID. Form terisi dari database dan Action `ubahProdukAdmin` dihubungkan melalui bind ID. Harga 0 dan field opsional kosong didukung oleh FormProduk yang sudah ada. Catatan US-09 dihapus.
+
+**Perbaikan:**
+Helper `lib/validasi-id-produk.js` memvalidasi string ID positif dalam batas bigint, digunakan oleh halaman serta Action. ID invalid atau produk tidak ada memanggil `notFound()` di halaman. Action memverifikasi `getUser()` sebelum update, memakai helper validasi field US-08, dan memperbarui hanya kolom produk yang diizinkan dengan filter ID; ID dan created_at tidak diubah. Update tanpa hasil tidak dianggap berhasil. Error memakai satu toast dan isian tetap tersimpan. Setelah berhasil, `/admin`, `/`, serta `/produk/<id>` direvalidate sebelum redirect.
+
+**Verifikasi:**
+Build Webpack berhasil. Pengujian Action dengan Supabase simulasi memeriksa login wajib, ID invalid/melebihi bigint, validasi field, kolom yang diperbarui dan filter ID, kegagalan query, produk hilang, revalidation dan redirect. Browser simulasi memverifikasi pengisian harga 0 serta field kosong, isian tetap utuh saat update gagal, satu toast error, redirect sukses, dan halaman tidak ditemukan untuk produk yang tidak tersedia. US-08 diuji ulang untuk memastikan tambah produk tetap bekerja. Tidak ada produk pada Supabase asli yang diubah dalam pengujian ini.
+
+**File diubah:**
+`app/admin/actions.js`, `app/admin/produk/[id]/ubah/page.jsx`, `lib/validasi-id-produk.js`, dan `PROMPTS.md`.
+
+**Cara tes database asli:**
+Login, pilih Ubah pada produk uji, ubah nama/harga/deskripsi, lalu simpan. Periksa perubahan pada admin, katalog, dan detail produk. Coba ID tidak valid/tidak ada, harga invalid, serta akses tanpa login. Gunakan produk uji untuk menghindari perubahan produk toko yang sedang dipakai.

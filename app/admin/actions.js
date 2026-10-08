@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { buatSupabaseSession } from "@/lib/supabase/session";
 import { validasiProduk } from "@/lib/validasi-produk";
+import { idProdukValid } from "@/lib/validasi-id-produk";
 
 function gagal(pesan) {
   // Identitas hasil baru memungkinkan toast muncul lagi pada percobaan berikutnya.
@@ -137,5 +138,31 @@ export async function tambahProdukAdmin(_state, formData) {
 
   revalidatePath("/admin");
   revalidatePath("/");
+  redirect("/admin");
+}
+
+
+export async function ubahProdukAdmin(id, _state, formData) {
+  try {
+    const supabase = await buatSupabaseSession();
+    const { data: sesi, error: errorSesi } = await supabase.auth.getUser();
+    if (errorSesi || !sesi?.user) {
+      return gagal("Sesi login tidak valid atau telah berakhir. Silakan masuk kembali sebelum mengubah produk.");
+    }
+    if (!idProdukValid(id)) return gagal("ID produk tidak valid. Buka kembali produk dari daftar admin.");
+    const hasil = validasiProduk(formData);
+    if (hasil.error) return gagal(hasil.error);
+
+    const { data, error } = await supabase.from("produk")
+      .update(hasil.data).eq("id", id).select("id").maybeSingle();
+    if (error) return gagal("Gagal menyimpan perubahan. Periksa koneksi dan izin akses database, lalu coba lagi.");
+    if (!data) return gagal("Produk tidak ditemukan atau tidak dapat diubah. Buka kembali daftar produk.");
+  } catch {
+    return gagal("Tidak dapat menyimpan perubahan. Periksa koneksi dan coba lagi.");
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath(`/produk/${BigInt(id).toString()}`);
   redirect("/admin");
 }
