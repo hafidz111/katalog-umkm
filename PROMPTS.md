@@ -525,3 +525,22 @@ Admin mengambil 12 produk per halaman dari database, count exact dan urutan crea
 Data contoh lib/data-contoh.js dan enam SVG produk dummy lokal dihapus. Bagian seed contoh di docs/schema.sql dihapus, tanpa mengubah struktur tabel/RLS. docs/hapus-data-contoh.sql menyediakan SELECT pemeriksaan dan DELETE terbatas pada nama/harga/foto persis seed lama. Skrip belum dijalankan pada Supabase asli; gambar Storage tidak dihapus karena belum teridentifikasi sebagai dummy.
 
 **Batas:** 14 produk asli beserta foto belum diimpor. Pencarian publik belum menyediakan 14 nama, harga, serta foto resmi yang bisa diverifikasi; tidak membuat harga atau foto toko palsu. Bucket/policy asli masih perlu dipasang pengguna melalui dashboard Supabase. Pengujian upload memakai simulasi.
+
+
+## Pengisian 14 produk baru dan verifikasi foto Storage asli
+
+Setelah pengguna login dan menghapus produk yang tidak relevan, 14 produk baru disimpan lewat form/Server Action admin: Espresso, Americano, Matcha Latte, Choco Hazelnut, Peppermint Tea, Chamomile Tea, Kentang Goreng, V60 Bener Meriah, Robusta 250 g/500 g, Houseblend 200 g, Arabika Gayo Honey/Papua Fullwash/Bali Kintamani Honey 200 g. Produk Aqua milik pengguna dipertahankan sehingga jumlah katalog 15. Tidak menghapus produk atau gambar Storage lain. Percobaan edit produk lama tidak menghasilkan perubahan karena pengguna telah menghapus baris tersebut; pengisian berikutnya seluruhnya berupa tambah baru.
+
+Foto ilustrasi dipakai atas pilihan pengguna. Ke-14 gambar JPG di bawah 3 MB diunggah melalui sesi admin ke bucket foto-produk asli dan seluruh gambar diperiksa di browser dengan complete/naturalWidth valid pada kedua halaman. Data/sumber foto disimpan di assets/produk-toko/produk.json; bukti URL dan pembacaan gambar di hasil-upload.json. Nama/harga dari sumber publik Shopee TERAKOPIE dan catatan Oktober 2025 di Scribd; harga terkini dan ketersediaan belum dikonfirmasi pemilik. Deskripsi netral menandai foto sebagai ilustrasi. Tidak menyatakan ilustrasi sebagai foto asli toko.
+
+## Pagination shadcn pada katalog dan admin
+
+**Hasil:** pagination memakai komposisi shadcn Pagination, Content, Item, Link, Previous, Next, dan Ellipsis, dengan token proyek dan Next Link. Nomor aktif memakai aria-current, batas awal/akhir menjadi span aria-disabled tanpa href, fokus keyboard terlihat dan target sentuh 44 px. Pada HP, tombol arah berupa ikon; teks muncul pada desktop. Jumlah slot nomor maksimal lima sehingga banyak halaman tidak menambah daftar tombol tanpa batas; kontrol boleh membungkus pada layar sempit. Pagination disembunyikan jika hanya satu halaman.
+
+PaginasiProduk digunakan katalog dan admin; query server 12 produk per halaman tetap. URL katalog mempertahankan q/urut, halaman pertama tidak menyertakan page. Tidak memasang paket, mengubah skema/RLS, atau menjalankan Git.
+
+**File:** components/ui/pagination.jsx, components/PaginasiProduk.jsx, lib/halaman-pagination.js, components/DaftarKatalog.jsx, components/DaftarProdukAdmin.jsx, PROMPTS.md.
+
+**Verifikasi:** build Webpack lulus. Pemeriksaan helper mencakup awal/tengah/akhir, 1 hingga 100.000 halaman, maksimal lima slot dan tidak ada nomor di luar batas. Browser dengan 15 produk database asli memeriksa kedua halaman katalog/admin, penanda aktif dan kontrol batas yang disabled, mempertahankan q=a/urut=nama-az saat berpindah halaman, serta tidak overflow pada admin 320 px dan katalog/admin 390 px. Data tidak dimutasi dalam pengujian pagination.
+
+**Cara tes:** buka / dan /admin, klik nomor atau panah untuk berpindah halaman. Pada halaman pertama panah kiri tidak bisa diklik; pada halaman terakhir panah kanan tidak bisa diklik. Cari nama dan pilih urutan lalu pindah halaman: keduanya tetap di URL. Periksa layar HP dan navigasi keyboard.

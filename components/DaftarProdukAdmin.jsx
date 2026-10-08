@@ -2,7 +2,7 @@ import { ambilProdukAdmin } from "@/lib/paginasi-admin";
 import ErrorToast from "@/components/ErrorToast";
 import ProdukKosong from "@/components/ProdukKosong";
 import TabelProduk from "@/components/TabelProduk";
-import Tombol from "@/components/Tombol";
+import PaginasiProduk from "@/components/PaginasiProduk";
 
 export default async function DaftarProdukAdmin({ supabase, halaman }) {
   let hasil;
@@ -13,9 +13,6 @@ export default async function DaftarProdukAdmin({ supabase, halaman }) {
   return <>
     <p className="text-sm text-teks-lembut">{total} produk · Halaman {hasil.halaman} dari {jumlahHalaman}</p>
     <TabelProduk daftarProduk={daftarProduk} />
-    {jumlahHalaman > 1 && <nav aria-label="Halaman produk admin" className="flex flex-wrap items-center justify-between gap-3">
-      <div>{hasil.halaman > 1 && <Tombol href={`/admin?page=${hasil.halaman - 1}`} varian="garis">Sebelumnya</Tombol>}</div>
-      {hasil.halaman < jumlahHalaman && <Tombol href={`/admin?page=${hasil.halaman + 1}`} varian="garis">Berikutnya</Tombol>}
-    </nav>}
+    <PaginasiProduk halaman={hasil.halaman} jumlahHalaman={jumlahHalaman} urlHalaman={page => page === 1 ? "/admin" : `/admin?page=${page}`} label="Halaman produk admin" />
   </>;
 }
