@@ -96,7 +96,7 @@ Menambahkan konfigurasi shadcn/ui di `components.json`, komponen Button/Input/Te
 Pesan error inline katalog diganti dengan toast. `lib/toast.js` menjadi tempat pemanggilan toast, sementara `ErrorToast` memakai ID stabil dan penjagaan efek agar tidak tampil dua kali. `FormDenganToast` menonaktifkan popup validasi bawaan dan hanya melaporkan field invalid pertama. Validasi form kosong dan login salah berulang diperiksa di browser: hanya satu toast untuk kejadian yang sama.
 
 **Status bonus:**
-Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 juga telah dikerjakan pada bagian tersendiri; US-10 sampai US-14 belum dikerjakan.
+Ini penyesuaian UI tambahan dari pengguna. US-07 kemudian dikerjakan pada bagian tersendiri di jurnal ini; US-08 juga telah dikerjakan pada bagian tersendiri; US-09 juga telah dikerjakan pada bagian tersendiri; US-10 telah dikerjakan pada bagian tersendiri; US-11 sampai US-14 belum dikerjakan.
 
 ### Diagnosis produk tidak muncul: jenis kunci Supabase salah
 
@@ -213,3 +213,27 @@ Build Webpack berhasil. Pengujian Action dengan Supabase simulasi memeriksa logi
 
 **Cara tes database asli:**
 Login, pilih Ubah pada produk uji, ubah nama/harga/deskripsi, lalu simpan. Periksa perubahan pada admin, katalog, dan detail produk. Coba ID tidak valid/tidak ada, harga invalid, serta akses tanpa login. Gunakan produk uji untuk menghindari perubahan produk toko yang sedang dipakai.
+
+
+## US-10 Hapus produk
+
+**Prompt:**
+Aktifkan tombol Hapus dengan konfirmasi nama produk, verifikasi login dan ID bigint di Server Action, hapus hanya baris yang sesuai, tampilkan hasil melalui Sonner sekali, serta revalidate admin/katalog/detail. Uji memakai produk khusus pengujian tanpa menghapus produk asli toko.
+
+**Hasil:**
+`TombolHapusProduk` mempertahankan tombol dan tampilan tabel. Konfirmasi browser menyebut nama produk karena dialog shadcn belum tersedia. Pembatalan berhenti sebelum pemanggilan Action. Tombol dinonaktifkan selama proses dan pengunci tambahan mencegah pengiriman berulang. `hapusProdukAdmin` memakai koneksi sesi cookie dengan publishable key, memverifikasi `getUser()`, dan memvalidasi ID menggunakan helper bigint yang sudah ada sebelum query delete dengan filter ID.
+
+**Perbaikan:**
+Delete meminta ID baris yang benar-benar dihapus; hasil kosong, termasuk produk yang sudah dihapus, tidak dianggap berhasil. Setelah sukses, `/admin`, `/`, dan `/produk/<id>` direvalidate serta daftar admin direfresh. Hasil ditampilkan langsung melalui helper Sonner dengan ID stabil agar toast tetap muncul ketika baris tabel dilepas dan tidak berlipat. Tidak ada penghapusan foto/Storage, perubahan RLS/skema, paket baru, atau perintah Git.
+
+**Verifikasi:**
+Build `npm run build -- --webpack` berhasil. Pengujian Action dengan Supabase simulasi lulus untuk tanpa login, ID invalid/melebihi batas bigint, filter ID tunggal, kegagalan database, hasil kosong/sudah dihapus, sukses, dan revalidation ketiga halaman. Pengujian handler tombol dengan React/konfirmasi/Action simulasi lulus untuk konfirmasi nama produk, batal tanpa Action, pencegahan submit ganda, satu pemanggilan toast per hasil, refresh sukses, serta gagal tanpa refresh. Data uji bernama “Produk uji hapus simulasi”, ID 42, hanya berada pada simulasi; tidak ada produk Supabase asli yang dihapus.
+
+**Batas pengujian browser:**
+Tabel dan produk uji berhasil dimuat di browser lokal. Saat tombol membuka konfirmasi bawaan, kendali browser mengalami timeout sehingga alur dialog serta toast setelah penghapusan belum terverifikasi di browser. Pengujian handler simulasi digunakan untuk memeriksa alur tersebut. Penghapusan dengan akun dan database Supabase asli belum diuji.
+
+**File diubah:**
+`app/admin/actions.js`, `components/TabelProduk.jsx`, `components/TombolHapusProduk.jsx`, dan `PROMPTS.md`.
+
+**Cara tes manual:**
+Login dan buat produk khusus pengujian. Klik Hapus, pastikan nama produk muncul, lalu Batal: produk harus tetap ada tanpa toast sukses. Ulangi dan setujui: tombol nonaktif selama proses, produk hilang dari daftar, dan satu toast sukses muncul. Periksa katalog serta detail produk yang dihapus. Untuk gagal database, ID invalid, serta pemanggilan Action tanpa login, pengujian simulasi memastikan tidak ada keberhasilan palsu atau penghapusan tanpa sesi.

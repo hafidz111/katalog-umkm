@@ -166,3 +166,26 @@ export async function ubahProdukAdmin(id, _state, formData) {
   revalidatePath(`/produk/${BigInt(id).toString()}`);
   redirect("/admin");
 }
+
+export async function hapusProdukAdmin(id) {
+  try {
+    const supabase = await buatSupabaseSession();
+    const { data: sesi, error: errorSesi } = await supabase.auth.getUser();
+    if (errorSesi || !sesi?.user) {
+      return gagal("Sesi login tidak valid atau telah berakhir. Silakan masuk kembali sebelum menghapus produk.");
+    }
+    if (!idProdukValid(id)) return gagal("ID produk tidak valid. Buka kembali produk dari daftar admin.");
+
+    const { data, error } = await supabase.from("produk")
+      .delete().eq("id", id).select("id").maybeSingle();
+    if (error) return gagal("Gagal menghapus produk. Periksa koneksi dan izin akses database, lalu coba lagi.");
+    if (!data) return gagal("Produk tidak ditemukan, sudah dihapus, atau tidak dapat dihapus.");
+  } catch {
+    return gagal("Tidak dapat menghapus produk. Periksa koneksi dan coba lagi.");
+  }
+
+  revalidatePath("/admin");
+  revalidatePath("/");
+  revalidatePath(`/produk/${BigInt(id).toString()}`);
+  return { berhasil: true, pesan: "Produk berhasil dihapus.", percobaan: crypto.randomUUID() };
+}
