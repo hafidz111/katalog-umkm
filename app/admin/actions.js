@@ -62,3 +62,50 @@ export async function keluarAdmin() {
   revalidatePath("/admin", "layout");
   redirect("/admin/login");
 }
+
+export async function gantiPasswordAdmin(_state, formData) {
+  try {
+    const supabase = await buatSupabaseSession();
+    const { data: sesi, error: errorSesi } = await supabase.auth.getUser();
+
+    if (errorSesi || !sesi?.user) {
+      return gagal("Sesi login tidak valid atau telah berakhir. Silakan masuk kembali sebelum mengganti password.");
+    }
+
+    const password = formData.get("password_baru");
+    const konfirmasi = formData.get("konfirmasi_password");
+    if (typeof password !== "string" || typeof konfirmasi !== "string" || !password || !konfirmasi) {
+      return gagal("Password baru dan konfirmasi password wajib diisi.");
+    }
+    if (password.length < 8) {
+      return gagal("Password baru minimal 8 karakter.");
+    }
+    if (password !== konfirmasi) {
+      return gagal("Konfirmasi password tidak sama dengan password baru.");
+    }
+
+    const { data, error } = await supabase.auth.updateUser({ password });
+    if (error) {
+      if (error.code === "same_password") {
+        return gagal("Password baru harus berbeda dari password sebelumnya.");
+      }
+      if (error.code === "weak_password") {
+        return gagal("Password ditolak karena terlalu lemah. Gunakan kombinasi huruf, angka, dan simbol.");
+      }
+      if (error.code === "reauthentication_needed" || error.code === "reauth_nonce_missing") {
+        return gagal("Supabase meminta verifikasi ulang. Silakan keluar dan masuk kembali sebelum mengganti password.");
+      }
+      if (error.status === 429) {
+        return gagal("Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi.");
+      }
+      return gagal("Gagal mengganti password. Periksa koneksi dan coba lagi.");
+    }
+    if (!data?.user) {
+      return gagal("Perubahan password belum dapat dikonfirmasi. Silakan coba lagi.");
+    }
+
+    return { berhasil: true, pesan: "Password berhasil diganti.", percobaan: crypto.randomUUID() };
+  } catch {
+    return gagal("Tidak dapat terhubung ke layanan akun. Silakan coba lagi atau hubungi pengelola toko.");
+  }
+}
